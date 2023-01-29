@@ -12,13 +12,13 @@ class TcpConnection
     typedef std::function<void(Packet&)> PROCESS_FUNC;
 
 public:
-    TcpConnection();
+    TcpConnection(SOCKET fd = INVALID_SOCKET, std::shared_ptr<EventLoop>& loop);
     ~TcpConnection();
 
     TcpConnection(const TcpConnection& connection) = delete;
     TcpConnection& operator=(const TcpConnection& rhs) = delete;
     
-    void init();
+    bool init();
 private:
     enum ConnState {Disconnected = 0, Connecting, Connected, Disconnecting};
 
@@ -26,6 +26,11 @@ private:
     void onWrite();
     void onError();
     void onClose();
+	void setReadCallback(PROCESS_FUNC func);
+	void setWriteCallback(EVENT_CALLBACK func);
+	void setErrorCallback(EVENT_CALLBACK func);
+	void setCloseCallback(EVENT_CALLBACK func);
+	std::shared_ptr<TcpChannel> getChannel();
 
 private:
     ConnState m_state;

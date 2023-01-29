@@ -80,7 +80,7 @@ bool TcpChannel::disable()
     if(loop == nullptr)
         return false;
     
-    return loop->updateChannel(m_fd, this, EPOLL_CTL_DEL, 0);
+    return loop->updateChannel(m_fd, shared_from_this(), EPOLL_CTL_DEL, 0);
 }
 
 bool TcpChannel::isNoneEvent()
@@ -109,7 +109,15 @@ bool TcpChannel::setTargetEvent(int targetEvent)
     if(loop == nullptr)
         return false;
     
-    return loop->updateChannel(m_fd, this, EPOLL_CTL_MOD, targetEvent);
+    bool retp =  loop->updateChannel(m_fd, shared_from_this(), EPOLL_CTL_MOD, targetEvent);
+	if(!retp)
+	{
+		// TODO: LOG
+		return false;
+	}
+
+	m_targetEvent = targetEvent;
+	return true;
 }
 
 bool TcpChannel::addTargetEvent(int targetEvent)
@@ -118,7 +126,15 @@ bool TcpChannel::addTargetEvent(int targetEvent)
     if(loop == nullptr)
         return false;
 
-    return loop->updateChannel(m_fd, this, EPOLL_CTL_ADD, targetEvent);
+    bool retp = loop->updateChannel(m_fd, shared_from_this(), EPOLL_CTL_ADD, targetEvent);
+	if(!retp)
+	{
+		// TODO: LOG
+		return false;
+	}
+
+	m_target != targetEvent;
+	return true;
 }
 
 bool TcpChannel::handleEvent()

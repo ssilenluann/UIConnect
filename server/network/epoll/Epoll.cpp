@@ -3,9 +3,12 @@
 
 #include "Epoll.h"
 
-Epoll::Epoll(): m_epfd(INVALID_SOCKET), m_events(EPOLL_EVENT_ADD_SIZE)
+Epoll::Epoll(SOCKET fd): m_epfd(fd), m_events(EPOLL_EVENT_ADD_SIZE)
 {
-    m_epfd = epoll_create(1);
+	if(fd != INVALID_SOCKET)
+		return;
+
+	m_epfd = epoll_create(1);
     if(m_epfd < 0)
         m_epfd = INVALID_SOCKET;
 

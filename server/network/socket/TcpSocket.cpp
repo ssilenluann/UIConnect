@@ -202,7 +202,7 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 	return true;
 }
 
-SOCKET TcpSocket::sock() const { return *m_sock; }
+std::shared_ptr<Socket> TcpSocket::sock() { return m_sock; }
 
 bool TcpSocket::isValid() { return m_sock != nullptr && *m_sock > SOCKET(0); }
 

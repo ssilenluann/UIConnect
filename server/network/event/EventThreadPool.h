@@ -1,7 +1,7 @@
 #ifndef NETWORK_EVENT_EVENTTHREADLOOP_H
 #define NETWORK_EVENT_EVENTTHREADLOOP_H
 
-#include <list>
+#include <vector>
 #include <atomic>
 
 #include "EventThread.h"
@@ -16,9 +16,11 @@ public:
 
     void start();
     void quit();
+	std::shared_ptr<EventLoop> getNextLoop(); 
     
-private:
-    std::list<std::shared_ptr<EventThread>> m_threads;
+private:	
+	int m_size;
     std::atomic_bool m_isQuited;
+	std::vector<std::shared_ptr<EventThread>> m_threads;
 };
 #endif

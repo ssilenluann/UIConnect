@@ -7,16 +7,18 @@
 #include <mutex>
 #include <vector>
 #include <condition_variable>
-
+#include <functional>
 #include "../epoll/Epoll.h"
 class TcpChannel;
 
 class EventLoop
 {
     typedef std::vector<std::shared_ptr<TcpChannel>> CHANNEL_LIST;
+	typedef std::function<void()> TASK_FUNCTION;
+	typedef std::vector<TASK_FUNCTION> TASK_LIST;
 
 public:
-    EventLoop(std::thread::id id = std::this_thread::get_id());
+    EventLoop(SOCKET sock = INVALID_SOCKET, std::thread::id id = std::this_thread::get_id());
     ~EventLoop();
 
     EventLoop(const EventLoop& loop) = delete;
@@ -26,8 +28,10 @@ public:
     void loop();
     void quit();
     bool isInLoopThread();
-    bool updateChannel(SOCKET fd, TcpChannel* pChannel, int action, int type);
-    bool checkChannelInLoop(TcpChannel* pChannel);
+    bool updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, int action, int type);
+    bool checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel);
+	void addTask(TASK_FUNCTION task);
+	void doTasks();
     
 private:
     std::thread::id m_threadId;
@@ -37,8 +41,8 @@ private:
     bool m_isQuiting;
     bool m_isRunning;
 
-    Epoll m_epoll;
+	Epoll m_epoll;
     CHANNEL_LIST m_activeChannels;
-    
+    TASK_LIST m_tasks;
 };
 #endif

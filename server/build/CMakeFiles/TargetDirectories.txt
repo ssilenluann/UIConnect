@@ -1,0 +1,2 @@
+/home/projs/uiconnect/uiconnect/server/build/CMakeFiles/server.dir
+/home/projs/uiconnect/uiconnect/server/build/network/CMakeFiles/network.dir

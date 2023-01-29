@@ -2,6 +2,7 @@
 #define NETWORK_EPOLL_EPOLL_H
 #include <vector>
 #include <map>
+#include <memory>
 #include <sys/epoll.h>
 #include "../socket/TcpSocket.h"
 #include "../TcpChannel.h"
@@ -16,7 +17,7 @@ class Epoll
     typedef std::vector<std::shared_ptr<TcpChannel>> CHANNEL_LIST;
 public:
 
-    Epoll();
+    Epoll(SOCKET fd = INVALID_SOCKET);
     ~Epoll();
     Epoll(const Epoll& epoll) = delete;
     Epoll& operator=(const Epoll& epoll) = delete;

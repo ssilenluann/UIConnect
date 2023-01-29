@@ -5,7 +5,7 @@
 #include "./socket/TcpSocket.h"
 
 class EventLoop;
-class TcpChannel
+class TcpChannel: public std::enable_shared_from_this<TcpChannel>
 {
     typedef std::function<void()> EventCallback;
 
@@ -32,14 +32,15 @@ public:
 
     bool handleEvent();
 
-private:
     bool setTargetEvent(int targetEvent);
     bool addTargetEvent(int targetEvent);
-private:
+
+public:
     static const int noneEvent;
     static const int readEvent;
     static const int writeEvent;
 
+private:
     SOCKET m_fd;
 
     int m_targetEvent;

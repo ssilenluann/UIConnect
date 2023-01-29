@@ -36,7 +36,8 @@ public:
 
 	std::shared_ptr<Packet> getPack();
 
-	inline SOCKET sock() const;
+	inline SOCKET fd() const;
+	inline std::shared_ptr<Socket> sock();
 
 	inline bool isValid();
 	

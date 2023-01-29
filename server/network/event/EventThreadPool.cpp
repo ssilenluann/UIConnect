@@ -2,7 +2,8 @@
 #define NETWORK_EVENT_EVENTTHREADLOOP_CPP
 
 #include "EventThreadPool.h"
-EventThreadPool::EventThreadPool(int size): m_threads(size), m_isQuited(false){}
+EventThreadPool::EventThreadPool(int size): m_size(size), m_isQuited(false), m_threads(size){}
+
 EventThreadPool::~EventThreadPool()
 {
     if(m_isQuited)
@@ -32,4 +33,12 @@ void EventThreadPool::quit()
     m_isQuited = true;
 }
 
+std::shared_ptr<EventLoop> EventThreadPool::getNextLoop()
+{
+	static int no = 0;
+	no %= m_size;
+	std::shared_ptr<EventLoop> loop = m_threads[no]->getLoop();
+	no ++;
+	return loop;
+}
 #endif

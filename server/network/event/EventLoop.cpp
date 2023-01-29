@@ -2,7 +2,9 @@
 #define NETWORK_EVENT_EVENTLOOP_CPP
 #include "EventLoop.h"
 
-EventLoop::EventLoop(std::thread::id id): m_threadId(id), m_isQuiting(false), m_isRunning(false){}
+#include <algorithm>
+
+EventLoop::EventLoop(SOCKET sock, std::thread::id id):m_epoll(sock), m_threadId(id), m_isQuiting(false), m_isRunning(false){}
 
 EventLoop::~EventLoop()
 {
@@ -37,6 +39,9 @@ void EventLoop::loop()
             channel->handleEvent();
         
         m_activeChannels.clear();
+
+		// do tasks
+		doTasks();
     }
 
     //TODO: LOG: event loop end loop
@@ -63,7 +68,7 @@ bool EventLoop::isInLoopThread()
     return std::this_thread::get_id() == m_threadId;
 }
 
-bool EventLoop::updateChannel(SOCKET fd, TcpChannel* pChannel, int action, int type)
+bool EventLoop::updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, int action, int type)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     
@@ -76,7 +81,7 @@ bool EventLoop::updateChannel(SOCKET fd, TcpChannel* pChannel, int action, int t
     return m_epoll.ctrl(fd, action, type) >= 0;
 }
 
-bool EventLoop::checkChannelInLoop(TcpChannel* pChannel)
+bool EventLoop::checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel)
 {
     if(pChannel == nullptr)
         return false;
@@ -91,4 +96,31 @@ bool EventLoop::checkChannelInLoop(TcpChannel* pChannel)
     return true;
 }
 
+void EventLoop::addTask(TASK_FUNCTION task)
+{
+	if(isInLoopThread())
+	{
+		task();
+	}
+	else
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_tasks.push_back(task);
+	}
+		
+}
+
+void EventLoop::doTasks()
+{
+	TASK_LIST functions;
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		std::swap(functions, m_tasks);
+		m_tasks.clear();
+	}
+
+	for(auto& function : functions)
+		function();
+		
+}
 #endif

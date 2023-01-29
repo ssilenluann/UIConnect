@@ -7,7 +7,7 @@
 		#define INVALID_SOCKET (0)
 	#endif
 	#ifndef SOCKET_ERROR
-		#define SOCKET_ERROR (-1)
+		#define SOCKET_ERROR (int(-1))
 	#endif
 #endif
 
