@@ -19,41 +19,6 @@ Epoll::~Epoll()
 
 }
 
-int Epoll::addIn(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLPRI);
-}
-
-int Epoll::modIn(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_MOD, EPOLLIN | EPOLLPRI);
-}
-
-int Epoll::del(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_DEL, 0);
-}
-
-int Epoll::addOut(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_ADD, EPOLLOUT);
-}
-
-int Epoll::modOut(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_MOD, EPOLLOUT);
-}
-
-int Epoll::addInOut(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLPRI);
-}
-
-int Epoll::modInOut(SOCKET fd)
-{
-    return ctrl(fd, EPOLL_CTL_MOD, EPOLLIN | EPOLLOUT | EPOLLPRI);
-}
-
 bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
 {
     int eventNum = epoll_wait(m_epfd, &*m_events.begin(), static_cast<int>(m_events.size()), timeout);
@@ -66,15 +31,14 @@ bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
     
     for(int i = 0; i < eventNum; i++)
     {
-        std::shared_ptr<TcpChannel>* channel = static_cast<std::shared_ptr<TcpChannel>*>(m_events[i].data.ptr);
-        if(m_channels.find((*channel)->fd()) == m_channels.end() || 
-        m_channels[(*channel)->fd()].get() != channel->get())
+        if(m_channels.find(m_events[i].data.fd) == m_channels.end())
         {
-            //TODO: LOG
+            // TODO: here can not find channel by fd, it is nessary to confirm connection is closed
+            // TODO: LOG
             continue;
         }
 
-        activeChannels.emplace_back(*channel);
+        activeChannels.emplace_back(m_channels[m_events[i].data.fd]);
     }
 
     return true;
@@ -90,7 +54,7 @@ bool Epoll::ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, int eventType)
     if(!isValid())  return -1;
     
     epoll_event event;
-    event.data.ptr = &pChannel;
+    event.data.fd = pChannel->fd();
     event.events = eventType;
     int retp = epoll_ctl(m_epfd, op, pChannel->fd(), &event);
     if(retp < 0)
@@ -110,34 +74,45 @@ bool Epoll::ctrl(SOCKET fd, int op, int eventType)
         return false;
     }
     
-    return ctrl(m_channels[fd], op, eventType) >= 0;
+    return ctrl(m_channels[fd], op, eventType);
 }
 
-bool Epoll::addChannel(std::shared_ptr<TcpChannel>& channel)
+bool Epoll::addChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel)
 {
-    return updateChannel(EPOLL_CTL_ADD, channel);
+    return updateChannel(EPOLL_CTL_ADD, fd, channel);
 }
 
-bool Epoll::delChannel(std::shared_ptr<TcpChannel>& channel)
+bool Epoll::delChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel)
 {
-    return updateChannel(EPOLL_CTL_DEL, channel);
+    return updateChannel(EPOLL_CTL_DEL, fd, channel);
 }
 
-bool Epoll::modChannel(std::shared_ptr<TcpChannel>& channel)
+bool Epoll::modChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel)
 {
-    return updateChannel(EPOLL_CTL_MOD, channel);
+    return updateChannel(EPOLL_CTL_MOD, fd, channel);
 }
 
 // @param: action: EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL
-bool Epoll::updateChannel(int action, std::shared_ptr<TcpChannel>& channel)
+bool Epoll::updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel)
 {
 
-    if(m_channels.find(channel->fd()) != m_channels.end())
+    // validate
+    // NOTICE: maybe it's better to close the existing socket if found
+    if(action == EPOLL_CTL_ADD && m_channels.find(fd) != m_channels.end())
     {
-        //TODO: LOG
+        // TODO: LOG
         return false;
     }
 
+    // NOTICE: if m_channel[fd] ==  channel, maybe it's better to close both 2 sockets
+    if((action == EPOLL_CTL_DEL || action == EPOLL_CTL_MOD) 
+        && (m_channels.find(fd) == m_channels.end() || m_channels[fd] != channel))
+    {
+        // TODO: LOG
+        return false;
+    }
+
+    // epoll controll
     if(!ctrl(channel, action, channel->targetEvent()))
     {
         //TODO: LOG
@@ -149,6 +124,7 @@ bool Epoll::updateChannel(int action, std::shared_ptr<TcpChannel>& channel)
     {
         m_channels[channel->fd()] = channel;
     }
+
     // del
     if(action == EPOLL_CTL_DEL)
     {

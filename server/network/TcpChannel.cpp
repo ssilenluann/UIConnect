@@ -133,10 +133,11 @@ bool TcpChannel::addTargetEvent(int targetEvent)
 		return false;
 	}
 
-	m_target != targetEvent;
+	m_targetEvent |= targetEvent;
 	return true;
 }
 
+// handle epoll signals
 bool TcpChannel::handleEvent()
 {
     //TODO: log

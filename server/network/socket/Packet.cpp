@@ -58,19 +58,4 @@ Packet& Packet::operator=(const Packet& rhs)
 
 }
 
-std::string Packet::dataLoad() const
-{
-	return std::string(packData, dataLoadPos, dataLoadSize);
-}
-
-DWORD Packet::packSize() const 
-{ 
-	return sizeof(head) + sizeof(length) + length; 
-}
-
-bool Packet::isValid()
-{
-	return cmd != WORD(PackCommand::INVALID);
-}
-
 #endif

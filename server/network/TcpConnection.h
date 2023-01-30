@@ -3,35 +3,42 @@
 
 #include <memory>
 #include "./socket/Buffer.h"
+#include "./socket/Packet.h"
 #include "./socket/TcpSocket.h"
 #include "TcpChannel.h"
 class TcpConnection
 {
 
-    typedef std::function<void()> EVENT_CALLBACK;
+    typedef std::function<void(SOCKET socket)> EVENT_CALLBACK;
+    typedef std::function<void(int)> WRITE_CALLBACK;
     typedef std::function<void(Packet&)> PROCESS_FUNC;
 
 public:
-    TcpConnection(SOCKET fd = INVALID_SOCKET, std::shared_ptr<EventLoop>& loop);
+    TcpConnection(SOCKET fd = INVALID_SOCKET, std::shared_ptr<EventLoop> loop = nullptr);
     ~TcpConnection();
 
-    TcpConnection(const TcpConnection& connection) = delete;
+    // TcpConnection(const TcpConnection& connection) = delete;
     TcpConnection& operator=(const TcpConnection& rhs) = delete;
     
     bool init();
-private:
-    enum ConnState {Disconnected = 0, Connecting, Connected, Disconnecting};
-
     void onRead();
     void onWrite();
     void onError();
     void onClose();
-	void setReadCallback(PROCESS_FUNC func);
-	void setWriteCallback(EVENT_CALLBACK func);
+    void setReadCallback(PROCESS_FUNC func);
+	void setWriteCallback(WRITE_CALLBACK func);
 	void setErrorCallback(EVENT_CALLBACK func);
 	void setCloseCallback(EVENT_CALLBACK func);
-	std::shared_ptr<TcpChannel> getChannel();
+    enum ConnState {Disconnected = 0, Connecting, Connected, Disconnecting};
 
+	std::shared_ptr<TcpChannel> getChannel();
+    ConnState status();
+
+    inline bool isClosed()
+    {
+        return m_state == Disconnected;
+    }
+    
 private:
     ConnState m_state;
 
@@ -43,7 +50,7 @@ private:
     std::shared_ptr<TcpChannel> m_channel;
 
     PROCESS_FUNC m_readCallback;
-    EVENT_CALLBACK m_writeCallback;
+    WRITE_CALLBACK m_writeCallback;
     EVENT_CALLBACK m_errorCallback;
     EVENT_CALLBACK m_closeCallback;
 

@@ -19,7 +19,7 @@ void EventThread::run()
     // TODO: LOG: thread job started
 	m_loop.reset(new EventLoop());
 
-    m_thread.reset(new std::thread([this](){m_loop->loop();}));
+    m_thread.reset(new std::thread(std::mem_fn(&EventLoop::loop), m_loop.get()));
     m_thread->detach();
     m_threadId = m_thread->get_id();
     // TODO: LOG: thread job ended

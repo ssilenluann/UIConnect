@@ -22,29 +22,19 @@ public:
     Epoll(const Epoll& epoll) = delete;
     Epoll& operator=(const Epoll& epoll) = delete;
 
-    int addIn(SOCKET fd);
-    int modIn(SOCKET fd);
-    int del(SOCKET fd);
-    
-    int addOut(SOCKET fd);
-    int modOut(SOCKET fd);
-    
-    int addInOut(SOCKET fd);
-    int modInOut(SOCKET fd);
-
     bool poll(CHANNEL_LIST& activeChannels, int timeout = 1000);
 
     inline bool isValid();
 
-    bool addChannel(std::shared_ptr<TcpChannel>& channel);
-    bool delChannel(std::shared_ptr<TcpChannel>& channel);
-    bool modChannel(std::shared_ptr<TcpChannel>& channel);
-
-    bool ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, int eventType);
-    bool ctrl(SOCKET fd, int op, int eventType);
+    bool addChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
+    bool delChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
+    bool modChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
+    bool updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel);
 
 private:
-    bool updateChannel(int action, std::shared_ptr<TcpChannel>& channel);
+    bool ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, int eventType);
+    bool ctrl(SOCKET fd, int op, int eventType);
+    
 
 private:
     

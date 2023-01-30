@@ -3,7 +3,12 @@
 
 #include "TcpConnection.h"
 
-TcpConnection::TcpConnection(SOCKET fd, std::shared_ptr<EventLoop>& loop): m_state(ConnState::Disconnected), m_readBuffer(new Buffer()), m_writeBuffer(new Buffer()), m_loop(loop), m_socket(new TcpSocket(fd)), m_channel(new TcpChannel(loop, m_socket->fd())){}
+TcpConnection::TcpConnection(SOCKET fd, std::shared_ptr<EventLoop> loop)
+: m_state(ConnState::Disconnected), m_readBuffer(new Buffer()), 
+m_writeBuffer(new Buffer()), m_loop(loop), m_socket(new TcpSocket(fd)), 
+m_channel(new TcpChannel(loop, m_socket->fd())){}
+
+TcpConnection::~TcpConnection(){}
 
 // not put it in construction function, because of "this"
 bool TcpConnection::init()
@@ -21,7 +26,6 @@ void TcpConnection::onRead()
     int size = 0;
     bool retp = m_socket->recv(m_readBuffer, size);
     
-
     // close
     if(retp == false && size == 0)
     {
@@ -37,13 +41,18 @@ void TcpConnection::onRead()
         return;
     }
 
-    // process message
+    // split message into packets, process each message
     Packet packet;
+
+    // get first message
     m_readBuffer->getPack(packet);
     while(packet.isValid())
     {
+        // deal with that message
         if(m_readCallback)
             m_readCallback(packet);
+
+        // get next message
         packet.clear();
         m_readBuffer->getPack(packet);
     }
@@ -79,21 +88,23 @@ void TcpConnection::onWrite()
     }
 
     if(m_writeCallback)
-        m_writeCallback();
+        m_writeCallback(size);
 }
 
 void TcpConnection::onError()
 {
     // TODO: LOG
     if(m_errorCallback)
-        m_errorCallback();
+        m_errorCallback(m_socket->fd());
 }
 
 void TcpConnection::onClose()
 {
+    m_channel->disable();
+
     // TODO: LOG
     if(m_closeCallback)
-        m_closeCallback();
+        m_closeCallback(m_socket->fd());
 }
 
 void TcpConnection::setReadCallback(PROCESS_FUNC func)
@@ -101,7 +112,7 @@ void TcpConnection::setReadCallback(PROCESS_FUNC func)
 	m_readCallback = func;	
 }
 
-void TcpConnection::setWriteCallback(EVENT_CALLBACK func)
+void TcpConnection::setWriteCallback(WRITE_CALLBACK func)
 {
 	m_writeCallback = func;
 }
@@ -116,8 +127,13 @@ void TcpConnection::setCloseCallback(EVENT_CALLBACK func)
 	m_closeCallback = func;
 }
 
-std::shared_ptr<TcpChannel> getChannel()
+std::shared_ptr<TcpChannel> TcpConnection::getChannel()
 {
 	return m_channel;
+}
+
+TcpConnection::ConnState TcpConnection::status()
+{
+    return m_state;
 }
 #endif

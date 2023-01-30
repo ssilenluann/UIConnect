@@ -30,10 +30,20 @@ public:
 	Packet(const Packet& pack);
 	Packet& operator=(const Packet& rhs);
 
-	inline std::string dataLoad() const;
+	inline std::string dataLoad() const
+	{
+		return std::string(packData, dataLoadPos, dataLoadSize);
+	}
 
-	inline DWORD packSize() const;
-	inline bool isValid();
+	inline DWORD packSize() const
+	{ 
+		return sizeof(head) + sizeof(length) + length; 
+	}
+
+	inline bool isValid() const
+	{
+		return cmd != WORD(PackCommand::INVALID);
+	}
 
 	inline void clear()
 	{
@@ -42,7 +52,7 @@ public:
 	}
 
 public:
-	WORD head;				// fix head data: FF FE
+	WORD head;				// fixed head data: FF FE
 	DWORD length;			// pack size
 	WORD cmd;				// command
 	DWORD dataLoadPos;	    // valid message head

@@ -1,10 +1,10 @@
 #include <iostream>
-#include "./network/socket/TcpSocket.h"
+#include "./network/TcpServer.h"
 
 int main()
 {
     std::cout << "test project" << std::endl;
-    TcpSocket sock;
-    sock.bind("127.0.0.1", 5260);
+    TcpServer server;
+    server.init("127.0.0.1", 5260);
     return 0;
 }

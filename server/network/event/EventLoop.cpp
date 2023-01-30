@@ -4,7 +4,8 @@
 
 #include <algorithm>
 
-EventLoop::EventLoop(SOCKET sock, std::thread::id id):m_epoll(sock), m_threadId(id), m_isQuiting(false), m_isRunning(false){}
+EventLoop::EventLoop(SOCKET sock, std::thread::id id)
+: m_threadId(id), m_isQuiting(false), m_isRunning(false), m_epoll(sock){}
 
 EventLoop::~EventLoop()
 {
@@ -78,7 +79,7 @@ bool EventLoop::updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, i
         return false;
     }
 
-    return m_epoll.ctrl(fd, action, type) >= 0;
+    return m_epoll.updateChannel(action, fd, pChannel);
 }
 
 bool EventLoop::checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel)
