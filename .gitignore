@@ -35,3 +35,5 @@
 ./server/build/*
 ./vscode
 ./vscode/*
+/server/build
+/.vscode
