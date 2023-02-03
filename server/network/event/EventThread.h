@@ -17,6 +17,11 @@ public:
     void run();
     void quit();
 	std::shared_ptr<EventLoop> getLoop();
+    inline std::thread::id id()
+    {
+        return m_threadId;
+    }
+    
 private:
     std::shared_ptr<std::thread> m_thread;
     std::shared_ptr<EventLoop> m_loop;

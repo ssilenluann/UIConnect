@@ -1,11 +1,12 @@
 #ifndef NETWORK_EVENT_EVENTLOOP_CPP
 #define NETWORK_EVENT_EVENTLOOP_CPP
 #include "EventLoop.h"
+#include "../TcpSession.h"
 
 #include <algorithm>
 
-EventLoop::EventLoop(SOCKET sock, std::thread::id id)
-: m_threadId(id), m_isQuiting(false), m_isRunning(false), m_epoll(sock){}
+EventLoop::EventLoop(std::thread::id id)
+: m_threadId(id), m_isQuiting(false), m_isRunning(false){}
 
 EventLoop::~EventLoop()
 {
@@ -27,7 +28,7 @@ void EventLoop::loop()
     
     //TODO: LOG: event loop start loop
 
-    while(m_isQuiting)
+    while(!m_isQuiting && m_isRunning)
     {
         bool retp = m_epoll.poll(m_activeChannels);
         if(!retp)
@@ -48,6 +49,7 @@ void EventLoop::loop()
     //TODO: LOG: event loop end loop
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+        m_sessions.clear();
         m_isRunning = false;
         m_cv.notify_all();
     }
@@ -59,8 +61,12 @@ void EventLoop::quit()
     // TODO: LOG: start quit
     std::unique_lock<std::mutex> lock(m_mutex);
     m_isQuiting = true;
+
+    // waitting for main loop finished
     m_cv.wait(lock, [this]() {return m_isRunning == false;});
-    
+
+    m_epoll.close();
+
     //TODO: LOG: end quit
 }
 
@@ -124,4 +130,27 @@ void EventLoop::doTasks()
 		function();
 		
 }
+
+void EventLoop::addSession(std::unique_ptr<TcpSession> session)
+{
+    addTask([&]()
+    {
+        if(!session->init())
+        {
+            // TOOD: log
+            return;
+        }
+
+        m_sessions.emplace(session->id(), std::move(session));
+    });
+}
+
+void EventLoop::removeSession(unsigned long sessionId)
+{
+    addTask([&]()
+    {
+        m_sessions.erase(sessionId);
+    });
+}
+
 #endif

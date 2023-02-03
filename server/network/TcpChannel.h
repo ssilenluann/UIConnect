@@ -34,6 +34,10 @@ public:
 
     bool setTargetEvent(int targetEvent);
     bool addTargetEvent(int targetEvent);
+    inline void setActiveEvent(int activeEvent)
+    {
+        m_activeEvent = activeEvent;
+    }
 
 public:
     static const int noneEvent;

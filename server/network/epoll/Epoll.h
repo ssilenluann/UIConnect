@@ -17,7 +17,7 @@ class Epoll
     typedef std::vector<std::shared_ptr<TcpChannel>> CHANNEL_LIST;
 public:
 
-    Epoll(SOCKET fd = INVALID_SOCKET);
+    Epoll();
     ~Epoll();
     Epoll(const Epoll& epoll) = delete;
     Epoll& operator=(const Epoll& epoll) = delete;
@@ -30,6 +30,8 @@ public:
     bool delChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
     bool modChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
     bool updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel);
+
+    void close();
 
 private:
     bool ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, int eventType);

@@ -21,10 +21,15 @@ public:
     TcpConnection& operator=(const TcpConnection& rhs) = delete;
     
     bool init();
+    inline SOCKET fd() { return m_socket->fd();}
+
     void onRead();
     void onWrite();
     void onError();
     void onClose();
+
+    bool send(Packet& pack);
+
     void setReadCallback(PROCESS_FUNC func);
 	void setWriteCallback(WRITE_CALLBACK func);
 	void setErrorCallback(EVENT_CALLBACK func);

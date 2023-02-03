@@ -28,9 +28,11 @@ void EventThread::run()
 
 void EventThread::quit()
 {
+    // TODO: LOG
     if(!m_isQuited)
         return;
-        
+
+    // here is a block call, thread safety    
     m_loop->quit();
     m_isQuited = true;
 }

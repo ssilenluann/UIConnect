@@ -5,7 +5,7 @@ int main()
 {
     std::cout << "test project" << std::endl;
     TcpServer server;
-    server.init("127.0.0.1", 5260);
+    server.init("192.168.134.133", 5260);
 	server.run();
     return 0;
 }

@@ -3,22 +3,24 @@
 
 #include <thread>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <mutex>
 #include <vector>
 #include <condition_variable>
 #include <functional>
 #include "../epoll/Epoll.h"
 class TcpChannel;
+class TcpSession;
 
 class EventLoop
 {
     typedef std::vector<std::shared_ptr<TcpChannel>> CHANNEL_LIST;
+    typedef std::unordered_map<unsigned long, std::unique_ptr<TcpSession>> SESSION_MAP;
 	typedef std::function<void()> TASK_FUNCTION;
 	typedef std::vector<TASK_FUNCTION> TASK_LIST;
 
 public:
-    EventLoop(SOCKET sock = INVALID_SOCKET, std::thread::id id = std::this_thread::get_id());
+    EventLoop(std::thread::id id = std::this_thread::get_id());
     ~EventLoop();
 
     EventLoop(const EventLoop& loop) = delete;
@@ -32,6 +34,8 @@ public:
     bool checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel);
 	void addTask(TASK_FUNCTION task);
 	void doTasks();
+    void addSession(std::unique_ptr<TcpSession> session);
+    void removeSession(unsigned long sessionId);
     
 private:
     std::thread::id m_threadId;
@@ -43,6 +47,7 @@ private:
 
 	Epoll m_epoll;
     CHANNEL_LIST m_activeChannels;
+    SESSION_MAP m_sessions;
     TASK_LIST m_tasks;
 };
 #endif

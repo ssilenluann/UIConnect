@@ -14,17 +14,20 @@ EventThreadPool::~EventThreadPool()
 
 void EventThreadPool::start()
 {
+    // TODO: LOG
     m_isQuited = false;
 
-    for(auto& thread: m_threads)
+    for(int i = 0; i < m_size; i++)
     {
-        thread.reset(new EventThread());
-        thread->run();
+        m_threads[i].reset(new EventThread());
+        m_idMap[m_threads[i]->id()] = m_threads[i];
+        m_threads[i]->run();
     }
 }
 
 void EventThreadPool::quit()
 {
+    // TODO: LOG
     for(auto& thread: m_threads)
     {
         thread->quit();

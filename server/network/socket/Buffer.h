@@ -21,6 +21,7 @@ public:
 	inline char* end() { return m_buffer + m_pos; }
 	inline char* start() { return m_buffer; }
     inline bool fulled() { return m_pos == BUFFER_SIZE;}
+	inline bool empty(){ return m_pos == 0;}
 
 	inline bool setMsg(const Packet& pack) { return setMsg(pack.packData.c_str(), pack.packSize());}
 	inline bool setMsg(const std::shared_ptr<Packet>& pack) { return setMsg(pack->packData.c_str(), pack->packSize());}

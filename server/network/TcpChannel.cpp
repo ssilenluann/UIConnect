@@ -7,7 +7,7 @@
 #include "./event/EventLoop.h"
 
 const int TcpChannel::noneEvent = 0;
-const int TcpChannel::readEvent = EPOLLIN | EPOLLPRI;
+const int TcpChannel::readEvent = EPOLLIN | EPOLLHUP;
 const int TcpChannel::writeEvent = EPOLLOUT;
 
 TcpChannel::TcpChannel(std::weak_ptr<EventLoop> loop, SOCKET fd)
@@ -126,14 +126,17 @@ bool TcpChannel::addTargetEvent(int targetEvent)
     if(loop == nullptr)
         return false;
 
+    int event = m_targetEvent;
+    m_targetEvent |= targetEvent;
+
     bool retp = loop->updateChannel(m_fd, shared_from_this(), EPOLL_CTL_ADD, targetEvent);
 	if(!retp)
 	{
+        m_targetEvent = event;
 		// TODO: LOG
 		return false;
 	}
 
-	m_targetEvent |= targetEvent;
 	return true;
 }
 

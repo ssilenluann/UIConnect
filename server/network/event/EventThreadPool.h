@@ -17,10 +17,15 @@ public:
     void start();
     void quit();
 	std::shared_ptr<EventLoop> getNextLoop(); 
+    inline std::shared_ptr<EventLoop> getLoop(std::thread::id& id)
+    {
+        return m_idMap[id].lock()->getLoop();
+    }
     
 private:	
 	int m_size;
     std::atomic_bool m_isQuited;
 	std::vector<std::shared_ptr<EventThread>> m_threads;
+    std::map<std::thread::id, std::weak_ptr<EventThread>> m_idMap;
 };
 #endif

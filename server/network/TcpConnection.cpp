@@ -8,7 +8,10 @@ TcpConnection::TcpConnection(SOCKET fd, std::shared_ptr<EventLoop> loop)
 m_writeBuffer(new Buffer()), m_loop(loop), m_socket(new TcpSocket(fd)), 
 m_channel(new TcpChannel(loop, m_socket->fd())){}
 
-TcpConnection::~TcpConnection(){}
+TcpConnection::~TcpConnection()
+{
+    onClose();
+}
 
 // not put it in construction function, because of "this"
 bool TcpConnection::init()
@@ -18,11 +21,16 @@ bool TcpConnection::init()
     m_channel->setErrorCallback(std::bind(&TcpConnection::onError, this));
     m_channel->setCloseCallback(std::bind(&TcpConnection::onClose, this));
 	
-	return m_channel->addTargetEvent(TcpChannel::readEvent | TcpChannel::writeEvent);
+	bool retp =  m_channel->addTargetEvent(TcpChannel::readEvent);
+    if(retp)
+        m_state = ConnState::Connected;
+    return retp;
 }
 
 void TcpConnection::onRead()
 {
+    if(m_state != ConnState::Connected) return;
+
     int size = 0;
     bool retp = m_socket->recv(m_readBuffer, size);
     
@@ -41,7 +49,7 @@ void TcpConnection::onRead()
         return;
     }
 
-    // split message into packets, process each message
+    // try to fetch all buffer message, split message into packets, process each message
     Packet packet;
 
     // get first message
@@ -61,8 +69,12 @@ void TcpConnection::onRead()
 
 void TcpConnection::onWrite()
 {
+    if(m_state != ConnState::Connected) return;
+
     int size = 0;
-    bool retp = m_socket->send(m_writeBuffer, size);
+    bool retp = false;
+
+    retp = m_socket->send(m_writeBuffer, size);
 
     // other side closed
     if(retp == false || size == 0)
@@ -80,31 +92,53 @@ void TcpConnection::onWrite()
         return;
     }
 
-    if(retp == true && size > 0)
+    if(retp == true && size == 0)
     {
         // EINTR OR EWOULDBLOCK
         // TODO: LOG
         // TODO: retry
+        return;
     }
 
+    // epoll event is in LT mode, if write buffer is empty, remove event
+    if(m_writeBuffer->empty())
+        m_channel->disableWriting();
+
     if(m_writeCallback)
-        m_writeCallback(size);
+        m_writeCallback(size); 
+    
+}
+
+// just add wirte event to epoll, when event deteached, write data to socket
+bool TcpConnection::send(Packet& pack)
+{
+    // TODO: buffer size maybe not enough
+    m_writeBuffer->setMsg(pack);
+    return m_channel->enableWriting();
 }
 
 void TcpConnection::onError()
 {
     // TODO: LOG
+    printf(m_socket->getLastError().c_str());
     if(m_errorCallback)
         m_errorCallback(m_socket->fd());
 }
 
 void TcpConnection::onClose()
 {
-    m_channel->disable();
+    if(m_state == ConnState::Disconnected)
+        return;
 
     // TODO: LOG
+    m_state = ConnState::Disconnecting;
+    m_channel->disable();
+    m_socket->close();
+
     if(m_closeCallback)
         m_closeCallback(m_socket->fd());
+    
+    m_state = ConnState::Disconnected;
 }
 
 void TcpConnection::setReadCallback(PROCESS_FUNC func)

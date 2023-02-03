@@ -5,7 +5,10 @@
 #include "TcpSocket.h"
 
 TcpSocket::TcpSocket() 
-	:m_sock(new Socket()){}
+	:m_sock(new Socket())
+{
+	reuse();
+}
 TcpSocket::TcpSocket(SOCKET sock) 
 	:m_sock(new Socket(sock)) {}
 
@@ -81,6 +84,7 @@ SOCKET TcpSocket::accept(SockAddr& addr)
 
 	socklen_t size = addr.size();
 	int fd = ::accept4(*m_sock, addr, &size, SOCK_NONBLOCK | SOCK_CLOEXEC);
+	if(fd < 0)
 	{
 		// TODO: LOG
 		close();
@@ -208,12 +212,19 @@ bool TcpSocket::isValid() { return m_sock != nullptr && *m_sock > SOCKET(0); }
 
 void TcpSocket::close()
 {
-	if (isValid())
+	if (!isValid())
 		m_sock->close();
+
+	// TODO: LOG
+	printf("socket closed\r\n"); 
 }
 
 std::string TcpSocket::getLastError()
 {
-	return strerror(errno);
+	int optval;
+	socklen_t optlen = static_cast<socklen_t>(sizeof(optval));
+
+	return getsockopt(*m_sock, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0
+		? strerror(errno) : strerror(optval);
 }
 #endif

@@ -3,11 +3,8 @@
 
 #include "Epoll.h"
 
-Epoll::Epoll(SOCKET fd): m_epfd(fd), m_events(EPOLL_EVENT_ADD_SIZE)
+Epoll::Epoll(): m_epfd(INVALID_SOCKET), m_events(EPOLL_EVENT_ADD_SIZE)
 {
-	if(fd != INVALID_SOCKET)
-		return;
-
 	m_epfd = epoll_create(1);
     if(m_epfd < 0)
         m_epfd = INVALID_SOCKET;
@@ -16,7 +13,7 @@ Epoll::Epoll(SOCKET fd): m_epfd(fd), m_events(EPOLL_EVENT_ADD_SIZE)
 
 Epoll::~Epoll()
 {
-
+    close();
 }
 
 bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
@@ -38,6 +35,7 @@ bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
             continue;
         }
 
+        m_channels[m_events[i].data.fd]->setActiveEvent(m_events[i].events);
         activeChannels.emplace_back(m_channels[m_events[i].data.fd]);
     }
 
@@ -49,9 +47,10 @@ bool Epoll::isValid()
     return m_epfd != INVALID_SOCKET;
 }
 
+// LT mode
 bool Epoll::ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, int eventType)
 {
-    if(!isValid())  return -1;
+    if(!isValid())  return false;
     
     epoll_event event;
     event.data.fd = pChannel->fd();
@@ -132,6 +131,17 @@ bool Epoll::updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& ch
     }
 
     return true;
+}
+
+void Epoll::close()
+{
+    if(m_epfd == INVALID_SOCKET)    return;
+
+    // TODO: LOG
+    ::close(m_epfd);
+    m_epfd = INVALID_SOCKET;
+    m_events.clear();
+    m_channels.clear();
 }
 
 #endif

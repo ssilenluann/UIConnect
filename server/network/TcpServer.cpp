@@ -5,8 +5,8 @@
 #include "TcpServer.h"
 
 TcpServer::TcpServer(int threadCount)
-: m_sock(new TcpSocket()), 
-m_loop(new EventLoop(m_sock->fd())), 
+: m_loop(new EventLoop()), 
+m_sock(new TcpSocket()), 
 m_channel(new TcpChannel(m_loop, m_sock->fd())),
 m_pool(new EventThreadPool(threadCount))
 {
@@ -27,6 +27,7 @@ bool TcpServer::bind(std::string ip, int port)
 
 bool TcpServer::listen()
 {
+	m_sock->listen();
 	bool retp = m_channel->enableReading();
 	if(!retp)
 	{
@@ -38,11 +39,16 @@ bool TcpServer::listen()
 
 bool TcpServer::init(std::string ip, int port)
 {
+	m_pool->start();
+
 	if(!bind(ip, port) || !listen())
 	{
 		// TODO: LOG
 		return false;
 	}
+
+	m_channel->setReadCallback(std::bind(&TcpServer::onConnect, this));
+	m_channel->setErrorCallback(std::bind(&TcpServer::onError, this));
 
 	return true;
 }
@@ -62,66 +68,46 @@ void TcpServer::onConnect()
 	}
 	
 	std::shared_ptr<EventLoop> loop = m_pool->getNextLoop();
-	auto connection = std::unique_ptr<TcpConnection>(new TcpConnection(sock, loop));
-	bool retp = connection->init();
-	if(!retp)
-	{
-		//TODO: LOG
-		connection.reset();
-		return;
-	}
 
-	connection->setReadCallback(std::bind(&TcpServer::onRead, this, std::placeholders::_1));
-	connection->setWriteCallback(std::bind(&TcpServer::onWrite, this, std::placeholders::_1));
-	connection->setErrorCallback(std::bind(&TcpServer::onError, this, std::placeholders::_1));
-	connection->setCloseCallback(std::bind(&TcpServer::onClose, this, std::placeholders::_1));
-	m_connections.emplace(sock, std::move(connection));
-
-	// TODO: LOG
-}
-
-void TcpServer::onRead(Packet& packet)
-{
-	std::cout << packet.dataLoad() << std::endl;
-}
-
-void TcpServer::onWrite(int size)
-{
+	m_sessionId++;
+	std::unique_ptr<TcpConnection> connection(new TcpConnection(sock, loop));
+	auto session = std::unique_ptr<TcpSession>(new TcpSession(m_sessionId, std::move(connection), loop));
+	loop->addSession(std::move(session));
 
 }
 
-void TcpServer::onError(SOCKET socket)
+
+void TcpServer::onError()
 {
 	// TODO: LOG
-	std::cout << socket << " error \r\n";
-	onClose(socket); 
+	std::cout << m_sock->fd() << " error, msg: " << m_sock->getLastError() << std::endl;
 }
 
-void TcpServer::onClose(SOCKET socket)
+void TcpServer::exit()
 {
 	// TODO: LOG
-	std::cout << "connection of socket " << socket << " will be closed son\r\n";
-	std::lock_guard<std::mutex> lock(m_mutex);
-	m_disconnectingSock.push_back(socket);
+	// 1. disable listen channel
+	m_channel->disable();
+	// 2. quit listen loop
+	m_loop->quit();	
+	// 3. close thread pool
+	m_pool->quit();
+	// 4.close listen sock
+	m_sock->close();
 }
 
-void TcpServer::closeConnection()
+void TcpServer::setStartCallback(CALLBACK func)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	std::map<SOCKET, std::unique_ptr<TcpConnection>>::iterator it;
-	for(auto fd: m_disconnectingSock)
-	{
-		it = m_connections.find(fd);
-		if(it == m_connections.end())
-		{
-			// TODO: LOG
-			continue;
-		}
-		if(!m_connections[fd]->isClosed())
-			continue;
-		
-		m_connections.erase(it);
-	}
+	m_startCallback = func;
 }
 
+void TcpServer::setErrorCallback(CALLBACK func)
+{
+	m_errorCallback = func;
+}
+
+void TcpServer::setQuitCallback(CALLBACK func)
+{
+	m_quitCallback = func;
+}
 #endif
