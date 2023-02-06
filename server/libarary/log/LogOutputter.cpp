@@ -1,0 +1,4 @@
+#ifndef LOG_LOGFORMATTER_CPP
+#define LOG_LOGFORMATTER_CPP
+
+#endif

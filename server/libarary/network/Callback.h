@@ -1,5 +1,5 @@
-#ifndef CALLBACK_H
-#define CALLBACK_H
+#ifndef NETWORK_CALLBACK_H
+#define NETWORK_CALLBACK_H
 
 #include <functional>
 #include "./socket/Packet.h"

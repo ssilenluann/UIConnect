@@ -2,34 +2,28 @@
 #define NETWORK_TCPSESSION_H
 
 #include "TcpConnection.h"
-#include <thread>
+#include "Callback.h"
+
+class EventLoop;
 class TcpSession
 {
 public:
     TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop);
-    virtual ~TcpSession();
+    ~TcpSession();
 
     TcpSession(const TcpSession& session) = delete;
     TcpSession& operator=(const TcpSession& rhs) = delete;
-
+    
     bool init();
     void send(Packet& pack);
     void handleMessage(Packet& pack);
     bool removeConnection(SOCKET socket);
     bool removeConnectionInLoop(SOCKET socket);
-    inline unsigned long id() {return m_sessionId;}
-
-    void setCloseCallback(std::function<void(SOCKET)> func)
-    {
-        m_closeCallback = func;
-    }
-
-
-protected:
+    
+private:
     unsigned long m_sessionId;
     std::weak_ptr<EventLoop> m_loop;
     std::unique_ptr<TcpConnection> m_connection;
-    std::function<void(SOCKET)> m_closeCallback;
-    
+    EVENT_CALLBACK m_closeCallback;
 };
 #endif
