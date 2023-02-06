@@ -25,6 +25,8 @@ public:
     uint32_t getElapse() const { return m_elapse;}
 
     uint32_t getThreadId() const { return m_threadId;}
+	
+	uint32_t getFiberId() const { return m_fiberId;}
 
     uint64_t getTime() const { return m_time;}
 
@@ -51,6 +53,8 @@ private:
     uint32_t m_elapse = 0;
     // thread id
     uint32_t m_threadId = 0;
+	// fiber id
+	uint32_t m_fiberId = 0;
     // time stamp
     uint64_t m_time = 0;
     // thread name
@@ -66,13 +70,16 @@ private:
 class LogItemWrap
 {
 public:
-    LogEventWrap(LogEvent::ptr e);
-    ~LogEventWrap();
+    LogItemWrap(LogItem::ptr e);
+    ~LogItemWrap();
 
-    LogEvent::ptr getEvent() const { return m_event;}
-
+    LogItem::ptr getItem() const { return m_item;}
+	
+	/**
+	* @brief get string stream
+	*/
     std::stringstream& getSS();
 private:
-    LogEvent::ptr m_event;
+    LogItem::ptr m_item;
 };
 #endif

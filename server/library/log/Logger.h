@@ -16,16 +16,16 @@ public:
 
     Logger(const std::string& name = "root");
 
-    void log(LogLevel::Level level, LogItem::ptr event);
-    void debug(LogItem::ptr event);
-    void info(LogItem::ptr event);
-    void warn(LogItem::ptr event);
-    void error(LogItem::ptr event);
-    void fatal(LogItem::ptr event);
+    void log(LogLevel::Level level, LogItem::ptr item);
+    void debug(LogItem::ptr item);
+    void info(LogItem::ptr item);
+    void warn(LogItem::ptr item);
+    void error(LogItem::ptr item);
+    void fatal(LogItem::ptr item);
 
-    void addAppender(LogOutputter::ptr appender);
-    void delAppender(LogOutputter::ptr appender);
-    void clearAppenders();
+    void addOutputter(LogOutputter::ptr outputter);
+    void delOutputter(LogOutputter::ptr outputter);
+    void clearOutputters();
 
     LogLevel::Level getLevel() const { return m_level;}
 
@@ -45,8 +45,8 @@ private:
     LogLevel::Level m_level;
     // Mutex
     MutexType m_mutex;
-    // appenders
-    std::list<LogOutputter::ptr> m_appenders;
+    // outputters
+    std::list<LogOutputter::ptr> m_outputters;
     // formatter
     LogFormatter::ptr m_formatter;
     // logger

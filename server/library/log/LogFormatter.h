@@ -18,6 +18,7 @@ public:
      *  %r elapsed time
      *  %c log name
      *  %t thread id
+	 *  %F fiber id
      *  %n \n
      *  %d time
      *  %f file name

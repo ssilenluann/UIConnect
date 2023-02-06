@@ -9,10 +9,11 @@
 // Persistence
 class LogOutputter
 {
+	friend class Logger;
 public:
     virtual ~LogOutputter(){}
 
-    virtual void log(LogLevel::Level level, std::shared_ptr<LogItem> event) = 0;
+    virtual void log(LogLevel::Level level, std::shared_ptr<LogItem> item) = 0;
 
     void setFormatter(std::shared_ptr<LogFormatter>& formatter) { m_formatter = formatter;}
     std::shared_ptr<LogFormatter> getFormatter(){ return m_formatter;}

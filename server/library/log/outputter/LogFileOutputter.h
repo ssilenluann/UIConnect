@@ -5,10 +5,14 @@
 #include <memory>
 #include <fstream>
 
-#include "LogLevel.h"
-#include "LogOutputter.h"
+#include "../LogLevel.h"
+#include "../LogOutputter.h"
+
+// persistence to file
 class LogFileOutputter : public LogOutputter
 {
+	typedef Spinlock MutexType;
+	
 public:
     typedef std::shared_ptr<LogFileOutputter> ptr;
     LogFileOutputter(const std::string& fileName);
