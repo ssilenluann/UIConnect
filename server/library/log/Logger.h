@@ -7,7 +7,10 @@
 
 #include "LogLevel.h"
 #include "LogItem.h"
-#include "LogOutputter.h"
+#include "../Mutex.h"
+
+class LogOutputter;
+class LogFormatter;
 class Logger : public std::enable_shared_from_this<Logger> {
 friend class LoggerManager;
 public:
@@ -23,8 +26,8 @@ public:
     void error(LogItem::ptr item);
     void fatal(LogItem::ptr item);
 
-    void addOutputter(LogOutputter::ptr outputter);
-    void delOutputter(LogOutputter::ptr outputter);
+    void addOutputter(std::shared_ptr<LogOutputter> outputter);
+    void delOutputter(std::shared_ptr<LogOutputter> outputter);
     void clearOutputters();
 
     LogLevel::Level getLevel() const { return m_level;}
@@ -33,9 +36,9 @@ public:
 
     const std::string& getName() const { return m_name;}
 
-    void setFormatter(LogFormatter::ptr val);
+    void setFormatter(std::shared_ptr<LogFormatter> val);
     void setFormatter(const std::string& val);
-    LogFormatter::ptr getFormatter();
+    std::shared_ptr<LogFormatter> getFormatter();
 
     std::string toYamlString();
 private:
@@ -46,9 +49,9 @@ private:
     // Mutex
     MutexType m_mutex;
     // outputters
-    std::list<LogOutputter::ptr> m_outputters;
+    std::list<std::shared_ptr<LogOutputter>> m_outputters;
     // formatter
-    LogFormatter::ptr m_formatter;
+    std::shared_ptr<LogFormatter> m_formatter;
     // logger
     Logger::ptr m_root;
 };

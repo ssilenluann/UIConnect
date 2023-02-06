@@ -1,7 +1,11 @@
 #ifndef LOG_LOGGER_CPP
 #define LOG_LOGGER_CPP
 
+#include <iostream>
+
 #include "Logger.h"   
+#include "LogOutputter.h"  
+#include "LogFormatter.h" 
 
 Logger::Logger(const std::string& name)
     :m_name(name)
@@ -23,7 +27,7 @@ void Logger::setFormatter(LogFormatter::ptr val) {
 
 void Logger::setFormatter(const std::string& val) {
     std::cout << "---" << val << std::endl;
-    sylar::LogFormatter::ptr new_val(new sylar::LogFormatter(val));
+    LogFormatter::ptr new_val(new LogFormatter(val));
     if(new_val->isError()) {
         std::cout << "Logger setFormatter name=" << m_name
                   << " value=" << val << " invalid formatter"
@@ -35,22 +39,23 @@ void Logger::setFormatter(const std::string& val) {
 }
 
 std::string Logger::toYamlString() {
-    MutexType::Lock lock(m_mutex);
-    YAML::Node node;
-    node["name"] = m_name;
-    if(m_level != LogLevel::UNKNOW) {
-        node["level"] = LogLevel::ToString(m_level);
-    }
-    if(m_formatter) {
-        node["formatter"] = m_formatter->getPattern();
-    }
+    // MutexType::Lock lock(m_mutex);
+    // YAML::Node node;
+    // node["name"] = m_name;
+    // if(m_level != LogLevel::UNKNOW) {
+    //     node["level"] = LogLevel::ToString(m_level);
+    // }
+    // if(m_formatter) {
+    //     node["formatter"] = m_formatter->getPattern();
+    // }
 
-    for(auto& i : m_outputters) {
-        node["outputters"].push_back(YAML::Load(i->toYamlString()));
-    }
-    std::stringstream ss;
-    ss << node;
-    return ss.str();
+    // for(auto& i : m_outputters) {
+    //     node["outputters"].push_back(YAML::Load(i->toYamlString()));
+    // }
+    // std::stringstream ss;
+    // ss << node;
+    // return ss.str();
+    return "";
 }
 
 

@@ -19,6 +19,7 @@ public:
     void handleMessage(Packet& pack);
     bool removeConnection(SOCKET socket);
     bool removeConnectionInLoop(SOCKET socket);
+    inline unsigned long id() {return m_sessionId;}
     
 private:
     unsigned long m_sessionId;

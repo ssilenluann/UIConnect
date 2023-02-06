@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "LogItem.h"
+#include "Logger.h"
+
 class LogFormatter
 {
 public:
@@ -48,7 +50,7 @@ public:
         /**
          * @brief format log content and put it to ostream
          */
-        virtual void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogItem::ptr item) = 0;
+        virtual void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogItem::ptr item) = 0;
     };
 
     /**

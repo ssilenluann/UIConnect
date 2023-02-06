@@ -4,14 +4,16 @@ project(uiconnect)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 
-target_include_directories(./library/)
-target_include_directories(./library/log/)
-target_include_directories(./library/log/outputter/)
+include_directories(./library/)
+include_directories(./library/log/)
+include_directories(./library/log/outputter/)
 
-target_include_directories(./library/network/)
-target_include_directories(./library/network/epoll/)
-target_include_directories(./library/network/event/)
-target_include_directories(./library/network/socket/)
+include_directories(./library/network/)
+include_directories(./library/network/epoll/)
+include_directories(./library/network/event/)
+include_directories(./library/network/socket/)
+
+include_directories(./library/utils)
 
 set(LIB_SRC 
 	./library/Mutex.cpp
@@ -23,19 +25,20 @@ set(LIB_SRC
 	./library/log/LogOutputter.cpp
 	./library/log/outputter/LogFileOutputter.cpp
 	./library/log/outputter/LogStdoutOutputter.cpp
-	./library/TcpChannel.cpp
-	./library/TcpConnection.cpp
-	./library/TcpServer.cpp
-	./library/TcpSession.cpp
-	./library/epoll/Epoll.cpp
-	./library/event/EventLoop.cpp
-	./library/event/EventThread.cpp
-	./library/event/EventThreadPool.cpp
-	./library/socket/Buffer.cpp
-	./library/socket/Packet.cpp
-	./library/socket/SockAddr.cpp
-	./library/socket/Socket.cpp
-	./library/socket/TcpSocket.cpp
+	./library/network/TcpChannel.cpp
+	./library/network/TcpConnection.cpp
+	./library/network/TcpServer.cpp
+	./library/network/TcpSession.cpp
+	./library/network/epoll/Epoll.cpp
+	./library/network/event/EventLoop.cpp
+	./library/network/event/EventThread.cpp
+	./library/network/event/EventThreadPool.cpp
+	./library/network/socket/Buffer.cpp
+	./library/network/socket/Packet.cpp
+	./library/network/socket/SockAddr.hpp
+	./library/network/socket/Socket.hpp
+	./library/network/socket/TcpSocket.cpp
+	./library/utils/FileSystem.cpp
 )
 
 add_executable(server main.cpp ${LIB_SRC})

@@ -1,6 +1,8 @@
 #ifndef LOG_LOGLEVEL_H
 #define LOG_LOGLEVEL_H
 
+#include <string>
+
 class LogLevel {
 public:
     enum Level {

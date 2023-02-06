@@ -1,9 +1,10 @@
 #ifndef LOG_LOGITEM_CPP
 #define LOG_LOGITEM_CPP
 
+#include <stdarg.h>
+
 #include "LogItem.h"
-
-
+#include "Logger.h"
 
 LogItemWrap::LogItemWrap(LogItem::ptr e)
     :m_item(e) {

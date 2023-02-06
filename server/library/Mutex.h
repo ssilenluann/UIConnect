@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <atomic>
 
-#include "noncopyable.h"
+#include "Noncopiable.h"
 
 // linux semaphore wrap class
 class Semaphore : Noncopyable {

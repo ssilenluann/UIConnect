@@ -1,26 +1,36 @@
-#ifndef LOG_LOGADDPANDER_H
-#define LOG_LOGADDPANDER_H
+#ifndef LOG_LOGOUTPUTTER_H
+#define LOG_LOGOUTPUTTER_H
 
 #include <memory>
 
 #include "LogLevel.h"
 #include "LogItem.h"
+#include "Logger.h"
 #include "LogFormatter.h"
+#include "../Mutex.h"
+
 // Persistence
 class LogOutputter
 {
 	friend class Logger;
 public:
+    typedef std::shared_ptr<LogOutputter> ptr;
+
     virtual ~LogOutputter(){}
 
-    virtual void log(LogLevel::Level level, std::shared_ptr<LogItem> item) = 0;
+    virtual void log(Logger::ptr logger, LogLevel::Level level, LogItem::ptr item) = 0;
+    virtual std::string toYamlString() = 0;
 
-    void setFormatter(std::shared_ptr<LogFormatter>& formatter) { m_formatter = formatter;}
-    std::shared_ptr<LogFormatter> getFormatter(){ return m_formatter;}
+    void setFormatter(LogFormatter::ptr& formatter);
+    LogFormatter::ptr getFormatter();
 
 protected:
-    LogLevel::Level m_level;
-    std::shared_ptr<LogFormatter> m_formatter;
+    LogLevel::Level m_level = LogLevel::DEBUG;
+    bool m_hasFormatter = false;
+    // Mutex
+    Logger::MutexType m_mutex;
+    // 日志格式器
+    LogFormatter::ptr m_formatter;
 }; 
 
 #endif

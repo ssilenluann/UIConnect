@@ -1,6 +1,7 @@
 #ifndef MUTEX_CPP
 #define MUTEX_CPP
 
+#include "Mutex.h"
 Semaphore::Semaphore(uint32_t count) {
     if(sem_init(&m_semaphore, 0, count)) {
         throw std::logic_error("sem_init error");

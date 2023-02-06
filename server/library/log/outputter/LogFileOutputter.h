@@ -7,6 +7,7 @@
 
 #include "../LogLevel.h"
 #include "../LogOutputter.h"
+#include "../../utils/FileSystem.h"
 
 // persistence to file
 class LogFileOutputter : public LogOutputter
@@ -16,10 +17,12 @@ class LogFileOutputter : public LogOutputter
 public:
     typedef std::shared_ptr<LogFileOutputter> ptr;
     LogFileOutputter(const std::string& fileName);
-    void log(LogLevel::Level level, std::shared_ptr<LogItem> item) override;
+    void log(Logger::ptr logger, LogLevel::Level level, LogItem::ptr item) override;
+    std::string toYamlString() override;
     bool reopen();
 private:
     std::string m_fileName;
     std::ofstream m_fileStream;
+    uint64_t m_lastTime = 0; // list time open target save file
 };
 #endif

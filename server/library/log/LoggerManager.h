@@ -1,9 +1,11 @@
 #ifndef LOG_LOGGERMANAGER_H
 #define LOG_LOGGERMANAGER_H
 
+#include <map>
+
 #include "Logger.h"
 #include "../Singleton.h"
-#include "../Spinlock.h"
+#include "../Mutex.h"
 
 // logger manager class
 class LoggerManager {
