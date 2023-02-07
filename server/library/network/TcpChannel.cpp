@@ -5,6 +5,9 @@
 
 #include "TcpChannel.h"
 #include "./event/EventLoop.h"
+#include "../log/Logger.h"
+
+static Logger::ptr g_logger = LOG_NAME("system");
 
 const int TcpChannel::noneEvent = 0;
 const int TcpChannel::readEvent = EPOLLIN | EPOLLHUP;
@@ -41,7 +44,7 @@ bool TcpChannel::enableReading()
     if((m_targetEvent & readEvent) > 0)
         return true;
     
-    return addTargetEvent(readEvent);
+    return m_targetEvent > 0 ? setTargetEvent(m_targetEvent | readEvent): addTargetEvent(readEvent);
 }
 
 bool TcpChannel::enableWriting()
@@ -49,7 +52,7 @@ bool TcpChannel::enableWriting()
     if((m_targetEvent & writeEvent) > 0)
         return true;
     
-    return addTargetEvent(writeEvent);
+    return m_targetEvent > 0 ? setTargetEvent(m_targetEvent | writeEvent): addTargetEvent(writeEvent);
 }
 
 bool TcpChannel::disableReading()
@@ -112,7 +115,7 @@ bool TcpChannel::setTargetEvent(int targetEvent)
     bool retp =  loop->updateChannel(m_fd, shared_from_this(), EPOLL_CTL_MOD, targetEvent);
 	if(!retp)
 	{
-		// TODO: LOG
+	    LOG_FMT_ERROR(g_logger, "epoll update channel failed, socket fd = %d, errno = %d", m_fd, errno);
 		return false;
 	}
 
@@ -133,7 +136,8 @@ bool TcpChannel::addTargetEvent(int targetEvent)
 	if(!retp)
 	{
         m_targetEvent = event;
-		// TODO: LOG
+		LOG_FMT_ERROR(g_logger, "epoll update channel failed, socket fd = %d, errno = %d", m_fd, errno);
+
 		return false;
 	}
 
@@ -143,7 +147,6 @@ bool TcpChannel::addTargetEvent(int targetEvent)
 // handle epoll signals
 bool TcpChannel::handleEvent()
 {
-    //TODO: log
     // EPOLLHUP: read and write for close both disable, maybe socket just created, not connect to other side
     if((m_activeEvent & EPOLLHUP) && !(m_activeEvent & EPOLLIN) && m_onClose)
         m_onClose();

@@ -2,6 +2,9 @@
 #define NETWORK_EVENT_EVENTTHREADLOOP_CPP
 
 #include "EventThreadPool.h"
+#include "../../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
+
 EventThreadPool::EventThreadPool(int size): m_size(size), m_isQuited(false), m_threads(size){}
 
 EventThreadPool::~EventThreadPool()
@@ -14,7 +17,7 @@ EventThreadPool::~EventThreadPool()
 
 void EventThreadPool::start()
 {
-    // TODO: LOG
+    LOG_INFO(g_logger) << "event thread poll start";
     m_isQuited = false;
 
     for(int i = 0; i < m_size; i++)
@@ -27,13 +30,14 @@ void EventThreadPool::start()
 
 void EventThreadPool::quit()
 {
-    // TODO: LOG
+    LOG_INFO(g_logger) << "event thread poll start to quit";
     for(auto& thread: m_threads)
     {
         thread->quit();
     }
 
     m_isQuited = true;
+    LOG_INFO(g_logger) << "event thread poll quited";
 }
 
 std::shared_ptr<EventLoop> EventThreadPool::getNextLoop()

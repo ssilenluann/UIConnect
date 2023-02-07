@@ -2,8 +2,11 @@
 #define NETWORK_EVENT_EVENTLOOP_CPP
 #include "EventLoop.h"
 #include "../TcpSession.h"
+#include "../../log/Logger.h"
 
 #include <algorithm>
+
+static Logger::ptr g_logger = LOG_NAME("system");
 
 EventLoop::EventLoop(std::thread::id id)
 : m_threadId(id), m_isQuiting(false), m_isRunning(false){}
@@ -21,19 +24,20 @@ EventLoop::~EventLoop()
 
 void EventLoop::loop()
 {
+    m_threadId = std::this_thread::get_id();
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_isRunning = true;
     }
     
-    //TODO: LOG: event loop start loop
+    LOG_INFO(g_logger) << "event loop started";
 
     while(!m_isQuiting && m_isRunning)
     {
         bool retp = m_epoll.poll(m_activeChannels);
         if(!retp)
         {
-            // TODO: LOG
+            LOG_FMT_ERROR(g_logger, "epoll error, event loop will quit, errno = %d", errno);
             break;
         }
 
@@ -46,7 +50,7 @@ void EventLoop::loop()
 		doTasks();
     }
 
-    //TODO: LOG: event loop end loop
+    LOG_INFO(g_logger) << "event loop end";
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_sessions.clear();
@@ -58,7 +62,7 @@ void EventLoop::loop()
 
 void EventLoop::quit()
 {
-    // TODO: LOG: start quit
+    LOG_INFO(g_logger) << "event loop start quit";
     std::unique_lock<std::mutex> lock(m_mutex);
     m_isQuiting = true;
 
@@ -67,7 +71,7 @@ void EventLoop::quit()
 
     m_epoll.close();
 
-    //TODO: LOG: end quit
+    LOG_INFO(g_logger) << "event loop quited";
 }
 
 bool EventLoop::isInLoopThread()
@@ -75,17 +79,17 @@ bool EventLoop::isInLoopThread()
     return std::this_thread::get_id() == m_threadId;
 }
 
-bool EventLoop::updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, int action, int type)
+bool EventLoop::updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, int action, int event)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     
     if(!checkChannelInLoop(pChannel) || !isInLoopThread()) 
     {
-        // TODO: LOG
+        LOG_INFO(g_logger) << "channel is not belong to this thread or event loop";
         return false;
     }
 
-    return m_epoll.updateChannel(action, fd, pChannel);
+    return m_epoll.updateChannel(action, fd, pChannel, event);
 }
 
 bool EventLoop::checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel)
@@ -96,7 +100,6 @@ bool EventLoop::checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel)
     auto pChannelLoop = pChannel->eventLoop().lock();
     if(pChannelLoop == nullptr || pChannelLoop.get() != this)
     {
-        // TODO: LOG
         return false;
     }
     
@@ -131,9 +134,9 @@ void EventLoop::doTasks()
 		
 }
 
-void EventLoop::addSession(std::unique_ptr<TcpSession> session)
+void EventLoop::addSession(std::shared_ptr<TcpSession> session)
 {
-    addTask([&]()
+    addTask([session, this]()
     {
         if(!session->init())
         {

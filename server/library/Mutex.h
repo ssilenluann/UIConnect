@@ -12,7 +12,8 @@
 #include "Noncopiable.h"
 
 // linux semaphore wrap class
-class Semaphore : Noncopyable {
+class Semaphore : Noncopyable 
+{
 public:
 	/*
 	* @param[in] count: init value
@@ -29,28 +30,35 @@ private:
 
 // lock guard wrap class
 template<class T>
-struct ScopedLockImpl {
+struct ScopedLockImpl 
+{
 public:
 
     ScopedLockImpl(T& mutex)
-        :m_mutex(mutex) {
+    :m_mutex(mutex) 
+    {
         m_mutex.lock();
         m_locked = true;
     }
 
-    ~ScopedLockImpl() {
+    ~ScopedLockImpl() 
+    {
         unlock();
     }
 
-    void lock() {
-        if(!m_locked) {
+    void lock() 
+    {
+        if(!m_locked) 
+        {
             m_mutex.lock();
             m_locked = true;
         }
     }
 
-    void unlock() {
-        if(m_locked) {
+    void unlock() 
+    {
+        if(m_locked) 
+        {
             m_mutex.unlock();
             m_locked = false;
         }

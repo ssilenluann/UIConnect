@@ -2,8 +2,10 @@
 #define LOG_LOGLEVEL_CPP
 
 #include "LogLevel.h"
-const char* LogLevel::ToString(LogLevel::Level level) {
-    switch(level) {
+const char* LogLevel::ToString(LogLevel::Level level) 
+{
+    switch(level) 
+    {
 #define XX(name) \
     case LogLevel::name: \
         return #name; \
@@ -21,7 +23,8 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     return "UNKNOW";
 }
 
-LogLevel::Level LogLevel::FromString(const std::string& str) {
+LogLevel::Level LogLevel::FromString(const std::string& str) 
+{
 #define XX(level, v) \
     if(str == #v) { \
         return LogLevel::level; \

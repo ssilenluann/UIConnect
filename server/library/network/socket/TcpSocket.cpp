@@ -2,10 +2,17 @@
 #define NETWORK_SOCKET_TCP_SOCKET_CPP
 
 #include <sys/ioctl.h>
-#include "TcpSocket.h"
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-TcpSocket::TcpSocket() 
-	:m_sock(new Socket())
+#include "TcpSocket.h"
+#include "../../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
+
+TcpSocket::TcpSocket(bool nonblock) 
+	:m_sock(new Socket(nonblock)), m_isNonBlock(nonblock)
 {
 	reuse();
 }
@@ -50,7 +57,7 @@ int TcpSocket::bind(const SockAddr& addr)
 	int size = addr.size();
 	if(::bind(*m_sock, addr, size) == -1)
 	{
-		// TODO: LOG
+		LOG_FMT_FATAL(g_logger, "tcp bind error, sock_fd = %d, errno = %d", *m_sock, errno);
 		close();
 		return SOCKET_ERROR;
 	}
@@ -70,7 +77,7 @@ int TcpSocket::listen(int backlog)
 
 	if(::listen(*m_sock, backlog) == SOCKET_ERROR)
 	{
-		// TODO: LOG
+		LOG_FMT_FATAL(g_logger, "tcp listen error, sock_fd = %d, errno = %d", *m_sock, errno);
 		close();
 		return SOCKET_ERROR;
 	}
@@ -86,7 +93,7 @@ SOCKET TcpSocket::accept(SockAddr& addr)
 	int fd = ::accept4(*m_sock, addr, &size, SOCK_NONBLOCK | SOCK_CLOEXEC);
 	if(fd < 0)
 	{
-		// TODO: LOG
+		LOG_FMT_ERROR(g_logger, "tcp accept error, sock_fd = %d, errno = %d", *m_sock, errno);
 		close();
 		return SOCKET_ERROR;
 	}
@@ -107,8 +114,22 @@ int TcpSocket::connect(const SockAddr& addr)
 	// not connected: check if connecting or failed
 	if(errno == EINPROGRESS || errno == EINTR || errno == EISCONN)
 		return 0;
-	
-	return SOCKET_ERROR;
+
+	fd_set writefd;
+	FD_SET(*m_sock, &writefd);
+
+	timeval time;
+	memset(&time, 0, sizeof(timeval)); 
+	retp = select(*m_sock + 1, nullptr, &writefd, nullptr, &time);
+	if(retp < 0 || !FD_ISSET(*m_sock, &writefd))
+		return SOCKET_ERROR;
+
+	return 0;
+}
+
+int TcpSocket::connect(std::string ip, unsigned short port)
+{
+	return connect(SockAddr(ip, port));
 }
 
 /**
@@ -141,7 +162,7 @@ bool TcpSocket::send(std::shared_ptr<Buffer>& buffer, int& sendSize)
 		return true;
 
 	// other side closed or socket error
-	// TODO: LOG
+	LOG_FMT_ERROR(g_logger, "tcp send error, sock_fd = %d, errno = %d", *m_sock, errno);
 	sendSize = -1;
 	return false;
 }
@@ -162,7 +183,7 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 	int retp = 0;
 	recvSize = 0;
 
-	// keep receiving until all data retrieved or given buffer is fulled
+	// keep receiving until all data retrieved or given buffer is fulled if socket is nonblock
 	while(true)
 	{
 		if(buffer->fulled())
@@ -176,7 +197,9 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 		{
 			buffer->addPos(retp);
 			recvSize += retp;
-			continue;
+			
+			if(m_isNonBlock) continue;
+			else break;	// block socket, return
 		}
 
 		// other side closed
@@ -198,7 +221,7 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 		if(retp < 0)	// socket error
 		{
 			recvSize = -1;
-			//TODO: LOG
+			LOG_FMT_ERROR(g_logger, "tcp recv error, sock_fd = %d, errno = %d", *m_sock, errno);
 			return false;
 		}
 	}
@@ -215,8 +238,8 @@ void TcpSocket::close()
 	if (!isValid())
 		m_sock->close();
 
-	// TODO: LOG
-	printf("socket closed\r\n"); 
+	LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", *m_sock);
+
 }
 
 std::string TcpSocket::getLastError()

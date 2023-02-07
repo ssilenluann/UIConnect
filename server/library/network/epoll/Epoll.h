@@ -26,10 +26,7 @@ public:
 
     inline bool isValid();
 
-    bool addChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
-    bool delChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
-    bool modChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel);
-    bool updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel);
+    bool updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel, int event);
 
     void close();
 

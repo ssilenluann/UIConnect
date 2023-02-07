@@ -3,8 +3,11 @@
 
 #include "TcpSession.h"
 #include "./event/EventLoop.h"
+#include "../log/Logger.h"
 
 #include <iostream>
+
+static Logger::ptr g_logger = LOG_NAME("system");
 
 TcpSession::TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop)
 : m_sessionId(sessionId), m_loop(loop)
@@ -21,7 +24,7 @@ bool TcpSession::init()
 {
     if(!m_connection->init())   
     {
-        // TODO: LOG
+        LOG_FMT_ERROR(g_logger, "tcp session init failed, session id = %d, errno = %d", m_sessionId, errno);
         m_connection.reset();
         return false;
     }
@@ -40,13 +43,12 @@ void TcpSession::send(Packet& pack)
 void TcpSession::handleMessage(Packet& pack)
 {
     // echo
-    std::cout << pack.dataLoad() << std::endl;
+    // std::cout << pack.dataLoad() << std::endl;
     send(pack);
 }
 
 bool TcpSession::removeConnection(SOCKET socket)
 {
-    // TODO: LOG
     m_connection->onClose();
     if(!m_connection->isClosed())   return false;
     
@@ -62,11 +64,10 @@ bool TcpSession::removeConnectionInLoop(SOCKET socket)
 {
     if(m_loop.expired())
     {
-        // TODO: LOG, session is still alive but event loop got killed
+        LOG_INFO(g_logger) << "session is still alive but event loop got killed";
         return false;
     }
 
     m_loop.lock()->addTask(std::bind(&TcpSession::removeConnection, this, socket));
 }
-
 #endif

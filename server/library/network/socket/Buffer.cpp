@@ -1,6 +1,9 @@
 #ifndef NETWORK_SOCKET_BUFFER_CPP
 #define NETWORK_SOCKET_BUFFER_CPP
 #include "Buffer.h"
+#include "../../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
+
 Buffer::Buffer() :m_pos(0)
 {
 	m_pos = 0;

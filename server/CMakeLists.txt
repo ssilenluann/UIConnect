@@ -4,16 +4,17 @@ project(uiconnect)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 
+include_directories(./external/repidjson/include)
+
 include_directories(./library/)
 include_directories(./library/log/)
 include_directories(./library/log/outputter/)
-
 include_directories(./library/network/)
 include_directories(./library/network/epoll/)
 include_directories(./library/network/event/)
 include_directories(./library/network/socket/)
-
 include_directories(./library/utils)
+
 
 set(LIB_SRC 
 	./library/Mutex.cpp
@@ -39,7 +40,13 @@ set(LIB_SRC
 	./library/network/socket/Socket.hpp
 	./library/network/socket/TcpSocket.cpp
 	./library/utils/FileSystem.cpp
+	./library/utils/Thread.cpp
 )
 
-add_executable(server main.cpp ${LIB_SRC})
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# SET_TARGET_PROPERTIES(dllname PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../bin)
 
+add_executable(server ./tests/TestTcpServer.cpp ${LIB_SRC})
+add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
+add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})

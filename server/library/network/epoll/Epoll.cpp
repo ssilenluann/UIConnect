@@ -2,12 +2,17 @@
 #define NETWORK_EPOLL_EPOLL_CPP
 
 #include "Epoll.h"
+#include "../../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
 
 Epoll::Epoll(): m_epfd(INVALID_SOCKET), m_events(EPOLL_EVENT_ADD_SIZE)
 {
 	m_epfd = epoll_create(1);
     if(m_epfd < 0)
+    {
         m_epfd = INVALID_SOCKET;
+        LOG_FATAL(g_logger) << "create epoll fd error\r\n";
+    }
 
 }
 
@@ -20,7 +25,10 @@ bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
 {
     int eventNum = epoll_wait(m_epfd, &*m_events.begin(), static_cast<int>(m_events.size()), timeout);
     if(eventNum == -1 && errno != EINTR)
+    {
+        LOG_FMT_ERROR(g_logger, "epoll wait error, fd = %d, errno = %d", m_epfd, errno);
         return false;
+    }
         
     // if event list fulled, enlarge it
     if(eventNum == m_events.size())
@@ -30,8 +38,9 @@ bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
     {
         if(m_channels.find(m_events[i].data.fd) == m_channels.end())
         {
-            // TODO: here can not find channel by fd, it is nessary to confirm connection is closed
-            // TODO: LOG
+        
+            LOG_FMT_INFO(g_logger, "unknown active channels, epoll fd = %d, event fd = %d", 
+            m_epfd, m_events[i].data.fd);
             continue;
         }
 
@@ -58,8 +67,8 @@ bool Epoll::ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, int eventType)
     int retp = epoll_ctl(m_epfd, op, pChannel->fd(), &event);
     if(retp < 0)
     {
-        //TODO: LOG
-
+        LOG_FMT_ERROR(g_logger, "epoll ctrl error, epoll fd = %d, event fd = %d, errno = %d", 
+        m_epfd, event.data.fd, errno);
     }
 
     return retp >= 0;
@@ -69,37 +78,22 @@ bool Epoll::ctrl(SOCKET fd, int op, int eventType)
 {
     if(m_channels.find(fd) == m_channels.end())
     {
-        //TODO: LOG
+        LOG_INFO(g_logger) << "unknown sock fd";
         return false;
     }
     
     return ctrl(m_channels[fd], op, eventType);
 }
 
-bool Epoll::addChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel)
-{
-    return updateChannel(EPOLL_CTL_ADD, fd, channel);
-}
-
-bool Epoll::delChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel)
-{
-    return updateChannel(EPOLL_CTL_DEL, fd, channel);
-}
-
-bool Epoll::modChannel(SOCKET fd, std::shared_ptr<TcpChannel>& channel)
-{
-    return updateChannel(EPOLL_CTL_MOD, fd, channel);
-}
-
 // @param: action: EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL
-bool Epoll::updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel)
+bool Epoll::updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel, int event)
 {
 
     // validate
     // NOTICE: maybe it's better to close the existing socket if found
     if(action == EPOLL_CTL_ADD && m_channels.find(fd) != m_channels.end())
     {
-        // TODO: LOG
+        LOG_INFO(g_logger) << "channel is already in epoll's channel list";
         return false;
     }
 
@@ -107,14 +101,13 @@ bool Epoll::updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& ch
     if((action == EPOLL_CTL_DEL || action == EPOLL_CTL_MOD) 
         && (m_channels.find(fd) == m_channels.end() || m_channels[fd] != channel))
     {
-        // TODO: LOG
+        LOG_INFO(g_logger) << "unknown socket fd, or channel is wrong";
         return false;
     }
 
     // epoll controll
-    if(!ctrl(channel, action, channel->targetEvent()))
+    if(!ctrl(channel, action, event))
     {
-        //TODO: LOG
         return false;
     }
 
@@ -137,7 +130,7 @@ void Epoll::close()
 {
     if(m_epfd == INVALID_SOCKET)    return;
 
-    // TODO: LOG
+    LOG_INFO(g_logger) << "epoll exit";
     ::close(m_epfd);
     m_epfd = INVALID_SOCKET;
     m_events.clear();

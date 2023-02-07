@@ -2,6 +2,8 @@
 #define NETWORK_TCPCONNECTION_CPP
 
 #include "TcpConnection.h"
+#include "../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
 
 TcpConnection::TcpConnection(SOCKET fd, std::shared_ptr<EventLoop> loop)
 : m_state(ConnState::Disconnected), m_readBuffer(new Buffer()), 
@@ -79,7 +81,7 @@ void TcpConnection::onWrite()
     // other side closed
     if(retp == false || size == 0)
     {
-        // TODO: LOG
+        LOG_FMT_INFO(g_logger, "other side closed, socket fd = %d, errno = %d", m_socket->fd(), errno);
         onClose();
         return;
     }
@@ -87,7 +89,7 @@ void TcpConnection::onWrite()
     // socket error
     if(retp == false && size < 0)
     {
-        //TODO: LOG
+        LOG_FMT_INFO(g_logger, "socket error, socket fd = %d, errno = %d", m_socket->fd(), errno);
         onError();
         return;
     }
@@ -95,8 +97,6 @@ void TcpConnection::onWrite()
     if(retp == true && size == 0)
     {
         // EINTR OR EWOULDBLOCK
-        // TODO: LOG
-        // TODO: retry
         return;
     }
 
@@ -112,15 +112,14 @@ void TcpConnection::onWrite()
 // just add wirte event to epoll, when event deteached, write data to socket
 bool TcpConnection::send(Packet& pack)
 {
-    // TODO: buffer size maybe not enough
     m_writeBuffer->setMsg(pack);
     return m_channel->enableWriting();
 }
 
 void TcpConnection::onError()
 {
-    // TODO: LOG
-    printf(m_socket->getLastError().c_str());
+    LOG_FMT_INFO(g_logger, "connection error and will be closed, socket fd = %d, errno = %d", m_socket->fd(), errno);
+    onClose();
     if(m_errorCallback)
         m_errorCallback(m_socket->fd());
 }
@@ -130,15 +129,14 @@ void TcpConnection::onClose()
     if(m_state == ConnState::Disconnected)
         return;
 
-    // TODO: LOG
     m_state = ConnState::Disconnecting;
     m_channel->disable();
     m_socket->close();
 
+    m_state = ConnState::Disconnected;
     if(m_closeCallback)
         m_closeCallback(m_socket->fd());
     
-    m_state = ConnState::Disconnected;
 }
 
 void TcpConnection::setReadCallback(PROCESS_FUNC func)

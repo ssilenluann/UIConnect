@@ -10,7 +10,7 @@
 class TcpSocket
 {
 public:
-	TcpSocket();
+	TcpSocket(bool nonblock = true);
 	TcpSocket(SOCKET sock);
 	TcpSocket(const TcpSocket& sock);
 
@@ -29,6 +29,7 @@ public:
 	SOCKET accept(SockAddr& addr);
 
 	int connect(const SockAddr& addr);
+	int connect(std::string ip, unsigned short port);
 
 	bool send(std::shared_ptr<Buffer>& buffer, int& sendSize);
 
@@ -48,6 +49,7 @@ public:
 private:
 	std::shared_ptr<Socket> m_sock;
 	int m_errno;
+	bool m_isNonBlock;
 
 };
 #endif

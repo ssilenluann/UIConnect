@@ -16,13 +16,15 @@ class LogOutputter
 public:
     typedef std::shared_ptr<LogOutputter> ptr;
 
+    LogOutputter(std::string pattern = "");
     virtual ~LogOutputter(){}
 
     virtual void log(Logger::ptr logger, LogLevel::Level level, LogItem::ptr item) = 0;
     virtual std::string toYamlString() = 0;
 
-    void setFormatter(LogFormatter::ptr& formatter);
+    void setFormatter(LogFormatter::ptr formatter);
     LogFormatter::ptr getFormatter();
+    virtual void setLevel(LogLevel::Level level) { m_level = level;}
 
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;

@@ -25,11 +25,12 @@ class Socket
 {
 public:
 	// RAII
-	Socket(): m_sock(INVALID_SOCKET)
+	Socket(bool nonblock = true): m_sock(INVALID_SOCKET)
 	{
 		// SOCK_CLOEXEC, close for exec, for example, if a child process opened by exec,
 		// this socket is unavailable for it
-		m_sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
+		int type = SOCK_STREAM | SOCK_CLOEXEC | (nonblock ? SOCK_NONBLOCK : 0);
+		m_sock = socket(AF_INET, type, 0);
 		if(m_sock == SOCKET_ERROR)
 		{
 			// TODO: LOG

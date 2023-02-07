@@ -1,7 +1,8 @@
 #ifndef NONCOPIABLE_H
 #define NONCOPIABLE_H
 
-class Noncopyable {
+class Noncopyable 
+{
 public:
     Noncopyable() = default;
 

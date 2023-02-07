@@ -2,7 +2,7 @@
 #define NETWORK_SOCKET_BUFFER_H
 #include "Packet.h"
 
-#define BUFFER_SIZE (1024*4)
+#define BUFFER_SIZE (128)
 
 class Buffer
 {

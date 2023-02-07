@@ -2,6 +2,8 @@
 #define NETWORK_PACKET_CPP
 
 #include "Packet.h"
+#include "../../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
 
 Packet::Packet(WORD command) : head(0xFEFF), length(0), cmd(command), dataLoadPos(0), dataLoadSize(0), checkSum(0) {}
 

@@ -15,7 +15,7 @@ class TcpSession;
 class EventLoop
 {
     typedef std::vector<std::shared_ptr<TcpChannel>> CHANNEL_LIST;
-    typedef std::unordered_map<unsigned long, std::unique_ptr<TcpSession>> SESSION_MAP;
+    typedef std::unordered_map<unsigned long, std::shared_ptr<TcpSession>> SESSION_MAP;
 	typedef std::function<void()> TASK_FUNCTION;
 	typedef std::vector<TASK_FUNCTION> TASK_LIST;
 
@@ -30,11 +30,11 @@ public:
     void loop();
     void quit();
     bool isInLoopThread();
-    bool updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, int action, int type);
+    bool updateChannel(SOCKET fd, std::shared_ptr<TcpChannel> pChannel, int action, int event);
     bool checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel);
 	void addTask(TASK_FUNCTION task);
 	void doTasks();
-    void addSession(std::unique_ptr<TcpSession> session);
+    void addSession(std::shared_ptr<TcpSession> session);
     void removeSession(unsigned long sessionId);
     
 private:

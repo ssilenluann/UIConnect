@@ -3,17 +3,23 @@
 
 #include "LogOutputter.h"
 
-void LogOutputter::setFormatter(LogFormatter::ptr& val) {
-    Logger::MutexType::Lock lock(m_mutex);
-    m_formatter = val;
-    if(m_formatter) {
-        m_hasFormatter = true;
-    } else {
-        m_hasFormatter = false;
+LogOutputter::LogOutputter(std::string pattern)
+{
+    if(!pattern.empty())
+    {
+        setFormatter(std::make_shared<LogFormatter>(pattern));
     }
 }
 
-LogFormatter::ptr LogOutputter::getFormatter() {
+void LogOutputter::setFormatter(LogFormatter::ptr val) 
+{
+    Logger::MutexType::Lock lock(m_mutex);
+    m_formatter = val;
+    m_hasFormatter =  m_formatter != nullptr;
+}
+
+LogFormatter::ptr LogOutputter::getFormatter() 
+{
     Logger::MutexType::Lock lock(m_mutex);
     return m_formatter;
 }

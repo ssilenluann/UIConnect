@@ -6,8 +6,10 @@
 #include "LoggerManager.h"
 #include "LogOutputter.h"
 #include "outputter/LogStdoutOutputter.h"
+#include "Logger.h"
 
-LoggerManager::LoggerManager() {
+LoggerManager::LoggerManager() 
+{
     m_root.reset(new Logger);
     m_root->addOutputter(LogOutputter::ptr(new LogStdoutOutputter));
 
@@ -16,10 +18,12 @@ LoggerManager::LoggerManager() {
     init();
 }
 
-Logger::ptr LoggerManager::getLogger(const std::string& name) {
+Logger::ptr LoggerManager::getLogger(const std::string& name) 
+{
     MutexType::Lock lock(m_mutex);
     auto it = m_loggers.find(name);
-    if(it != m_loggers.end()) {
+    if(it != m_loggers.end()) 
+    {
         return it->second;
     }
 
@@ -29,7 +33,8 @@ Logger::ptr LoggerManager::getLogger(const std::string& name) {
     return logger;
 }
 
-std::string LoggerManager::toYamlString() {
+std::string LoggerManager::toYamlString()
+{
     // MutexType::Lock lock(m_mutex);
     // YAML::Node node;
     // for(auto& i : m_loggers) {
@@ -41,7 +46,8 @@ std::string LoggerManager::toYamlString() {
     return "";
 }
 
-void LoggerManager::init() {
+void LoggerManager::init() 
+{
 }
 
 #endif

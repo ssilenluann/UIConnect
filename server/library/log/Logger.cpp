@@ -8,27 +8,32 @@
 #include "LogFormatter.h" 
 
 Logger::Logger(const std::string& name)
-    :m_name(name)
-    ,m_level(LogLevel::DEBUG) {
+:m_name(name),m_level(LogLevel::DEBUG) 
+{
     m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
-void Logger::setFormatter(LogFormatter::ptr val) {
+void Logger::setFormatter(LogFormatter::ptr val)
+{
     MutexType::Lock lock(m_mutex);
     m_formatter = val;
 
-    for(auto& i : m_outputters) {
+    for(auto& i : m_outputters) 
+    {
         MutexType::Lock ll(i->m_mutex);
-        if(!i->m_hasFormatter) {
+        if(!i->m_hasFormatter) 
+        {
             i->m_formatter = m_formatter;
         }
     }
 }
 
-void Logger::setFormatter(const std::string& val) {
+void Logger::setFormatter(const std::string& val) 
+{
     std::cout << "---" << val << std::endl;
     LogFormatter::ptr new_val(new LogFormatter(val));
-    if(new_val->isError()) {
+    if(new_val->isError()) 
+    {
         std::cout << "Logger setFormatter name=" << m_name
                   << " value=" << val << " invalid formatter"
                   << std::endl;
@@ -38,7 +43,8 @@ void Logger::setFormatter(const std::string& val) {
     setFormatter(new_val);
 }
 
-std::string Logger::toYamlString() {
+std::string Logger::toYamlString() 
+{
     // MutexType::Lock lock(m_mutex);
     // YAML::Node node;
     // node["name"] = m_name;
@@ -59,12 +65,14 @@ std::string Logger::toYamlString() {
 }
 
 
-LogFormatter::ptr Logger::getFormatter() {
+LogFormatter::ptr Logger::getFormatter() 
+{
     MutexType::Lock lock(m_mutex);
     return m_formatter;
 }
 
-void Logger::addOutputter(LogOutputter::ptr outputter) {
+void Logger::addOutputter(LogOutputter::ptr outputter) 
+{
     MutexType::Lock lock(m_mutex);
     if(!outputter->getFormatter()) {
         MutexType::Lock ll(outputter->m_mutex);
@@ -73,7 +81,8 @@ void Logger::addOutputter(LogOutputter::ptr outputter) {
     m_outputters.push_back(outputter);
 }
 
-void Logger::delOutputter(LogOutputter::ptr outputter) {
+void Logger::delOutputter(LogOutputter::ptr outputter) 
+{
     MutexType::Lock lock(m_mutex);
     for(auto it = m_outputters.begin();
             it != m_outputters.end(); ++it) {
@@ -84,42 +93,54 @@ void Logger::delOutputter(LogOutputter::ptr outputter) {
     }
 }
 
-void Logger::clearOutputters() {
+void Logger::clearOutputters() 
+{
     MutexType::Lock lock(m_mutex);
     m_outputters.clear();
 }
 
-void Logger::log(LogLevel::Level level, LogItem::ptr item) {
-    if(level >= m_level) {
+void Logger::log(LogLevel::Level level, LogItem::ptr item) 
+{
+    if(level >= m_level) 
+    {
         auto self = shared_from_this();
         MutexType::Lock lock(m_mutex);
-        if(!m_outputters.empty()) {
-            for(auto& i : m_outputters) {
+        if(!m_outputters.empty()) 
+        {
+            for(auto& i : m_outputters) 
+            {
                 i->log(self, level, item);
             }
-        } else if(m_root) {
+        } 
+        else if(m_root) 
+        {
             m_root->log(level, item);
         }
     }
 }
 
-void Logger::debug(LogItem::ptr item) {
+void Logger::debug(LogItem::ptr item) 
+{
     log(LogLevel::DEBUG, item);
 }
 
-void Logger::info(LogItem::ptr item) {
+void Logger::info(LogItem::ptr item) 
+{
     log(LogLevel::INFO, item);
 }
 
-void Logger::warn(LogItem::ptr item) {
+void Logger::warn(LogItem::ptr item) 
+{
     log(LogLevel::WARN, item);
 }
 
-void Logger::error(LogItem::ptr item) {
+void Logger::error(LogItem::ptr item) 
+{
     log(LogLevel::ERROR, item);
 }
 
-void Logger::fatal(LogItem::ptr item) {
+void Logger::fatal(LogItem::ptr item) 
+{
     log(LogLevel::FATAL, item);
 }
 
