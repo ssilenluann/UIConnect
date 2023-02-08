@@ -6,38 +6,30 @@
 #include "../../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
-EventThread::EventThread(): m_isQuited(false){}
+EventThread::EventThread(): Thread()
+{
+    m_loop.reset(new EventLoop());
+    bind(std::bind(&EventLoop::loop, m_loop.get()));
+}
 
 EventThread::~EventThread()
 {
-    
     if(m_isQuited)
         return;
 
     quit();
 }
 
-void EventThread::run()
-{
-    LOG_INFO(g_logger) << "event thread start";
-	m_loop.reset(new EventLoop());
-
-    m_thread.reset(new std::thread(std::mem_fn(&EventLoop::loop), m_loop.get()));
-    m_thread->detach();
-    m_threadId = m_thread->get_id();
-
-}
 
 void EventThread::quit()
 {
-    
     if(!m_isQuited)
         return;
 
     LOG_INFO(g_logger) << "event thread start to quit";
-    // here is a block call, thread safety    
     m_loop->quit();
-    m_isQuited = true;
+    
+    Thread::quit();
     LOG_INFO(g_logger) << "event thread quited";
 }
 

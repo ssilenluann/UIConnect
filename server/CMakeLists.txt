@@ -9,6 +9,7 @@ include_directories(./external/repidjson/include)
 include_directories(./library/)
 include_directories(./library/log/)
 include_directories(./library/log/outputter/)
+include_directories(./library/thread/)
 include_directories(./library/network/)
 include_directories(./library/network/epoll/)
 include_directories(./library/network/event/)
@@ -18,6 +19,8 @@ include_directories(./library/utils)
 
 set(LIB_SRC 
 	./library/Mutex.cpp
+	./library/thread/Thread.cpp
+	./library/thread/ThreadPool.hpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -40,7 +43,7 @@ set(LIB_SRC
 	./library/network/socket/Socket.hpp
 	./library/network/socket/TcpSocket.cpp
 	./library/utils/FileSystem.cpp
-	./library/utils/Thread.cpp
+	./library/utils/ThreadUtil.cpp
 )
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)

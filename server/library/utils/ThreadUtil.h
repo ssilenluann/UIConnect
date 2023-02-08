@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-class Thread
+class ThreadUtil
 {
 public:
     static pid_t GetThreadId();
