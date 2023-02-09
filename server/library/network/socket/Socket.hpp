@@ -62,6 +62,11 @@ public:
 	{
 		close();
 	}
+	
+	inline SOCKET fd()
+	{
+		return m_sock;
+	}
 
 public:
 	void close()

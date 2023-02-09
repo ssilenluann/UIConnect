@@ -57,7 +57,7 @@ int TcpSocket::bind(const SockAddr& addr)
 	int size = addr.size();
 	if(::bind(*m_sock, addr, size) == -1)
 	{
-		LOG_FMT_FATAL(g_logger, "tcp bind error, sock_fd = %d, errno = %d", *m_sock, errno);
+		LOG_FMT_FATAL(g_logger, "tcp bind error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
 		close();
 		return SOCKET_ERROR;
 	}
@@ -77,7 +77,7 @@ int TcpSocket::listen(int backlog)
 
 	if(::listen(*m_sock, backlog) == SOCKET_ERROR)
 	{
-		LOG_FMT_FATAL(g_logger, "tcp listen error, sock_fd = %d, errno = %d", *m_sock, errno);
+		LOG_FMT_FATAL(g_logger, "tcp listen error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
 		close();
 		return SOCKET_ERROR;
 	}
@@ -93,7 +93,7 @@ SOCKET TcpSocket::accept(SockAddr& addr)
 	int fd = ::accept4(*m_sock, addr, &size, SOCK_NONBLOCK | SOCK_CLOEXEC);
 	if(fd < 0)
 	{
-		LOG_FMT_ERROR(g_logger, "tcp accept error, sock_fd = %d, errno = %d", *m_sock, errno);
+		LOG_FMT_ERROR(g_logger, "tcp accept error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
 		close();
 		return SOCKET_ERROR;
 	}
@@ -162,7 +162,7 @@ bool TcpSocket::send(std::shared_ptr<Buffer>& buffer, int& sendSize)
 		return true;
 
 	// other side closed or socket error
-	LOG_FMT_ERROR(g_logger, "tcp send error, sock_fd = %d, errno = %d", *m_sock, errno);
+	LOG_FMT_ERROR(g_logger, "tcp send error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
 	sendSize = -1;
 	return false;
 }
@@ -221,7 +221,7 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 		if(retp < 0)	// socket error
 		{
 			recvSize = -1;
-			LOG_FMT_ERROR(g_logger, "tcp recv error, sock_fd = %d, errno = %d", *m_sock, errno);
+			LOG_FMT_ERROR(g_logger, "tcp recv error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
 			return false;
 		}
 	}
@@ -238,7 +238,7 @@ void TcpSocket::close()
 	if (!isValid())
 		m_sock->close();
 
-	LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", *m_sock);
+	LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", m_sock->fd());
 
 }
 
