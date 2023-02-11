@@ -93,7 +93,7 @@ public:
         YAML::Node node(YAML::NodeType::Sequence);
         for(auto& i: v)
         {
-            node.push_back(ItemConverter<T, std::string>()(i));
+            node.push_back(YAML::Load(ItemConverter<T, std::string>()(i)));
         }
 
         std::stringstream ss;
@@ -103,5 +103,159 @@ public:
 
 };
 
+template<class T>
+class ItemConverter<std::string, std::set<T>>
+{
+public:
+    std::set<T> operator()(std::string& val)
+    {
+        std::set<T> set;
+        std::stringstream ss;
+        YAML::Node node = YAML::Load(val);
+        for(int i = 0; i < node.size(); i++)
+        {
+            ss.str("");
+            ss << node[i];
+            set.insert(ItemConverter<std::string, T>()(ss.str()));
+        }
+
+        return set;
+    }
+};
+
+template<class T>
+class ItemConverter<std::set<T>, std::string>
+{
+public:
+    std::string operator()(std::set<T>& val)
+    {
+        YAML::Node node(YAML::NodeType::Sequence);
+        for(auto& t: val)
+        {
+            node.push_back(YAML::Load(ItemConverter<T, std::string>()(t)));
+        }
+
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template<class T>
+class ItemConverter<std::string, std::unordered_set<T>>
+{
+public:
+    std::unordered_set<T> operator()(std::string& val)
+    {
+        std::unordered_set<T> set;
+        std::stringstream ss;
+        YAML::Node node = YAML::Load(val);
+        
+        for(int i = 0; i < node.size(); i++)
+        {
+            ss.str("");
+            ss << node[i];
+            set.insert(ItemConverter<std::string, T>()(ss.str()));
+        }
+
+        return set;
+    }
+};
+
+template<class T>
+class ItemConverter<std::unordered_set<T>, std::string>
+{
+public:
+    std::string operator()(std::unordered_set<T>& val)
+    {
+        YAML::Node node(YAML::NodeType::Sequence);
+        for(auto& t: val)
+        {
+            node.push_back(YAML::Load(ItemConverter<T, std::string>()(t)));
+        }
+        
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template<class T>
+class ItemConverter<std::string, std::map<std::string, T>>
+{
+public:
+    std::map<std::string, T> operator()(std::string& val)
+    {
+        std::stringstream ss;
+        std::map<std::string, T> map;
+        YAML::Node node = YAML::Load(val);
+        
+        for(int i = 0; i < node.size(); i++)
+        {
+            ss.str("");
+            ss << node[i].second;
+            map[node[i].first] = ItemConverter<string, T>()(ss.str());
+        }
+        
+        return map;
+    }
+};
+
+template<class T>
+class ItemConverter<std::map<std::string, T>, std::string>
+{
+public:
+    std::string operator()(std::map<std::string, T>& val)
+    {
+        YAML::Node node(YAML::NodeType::Map);
+        for(auto& t: val)
+        {
+            node[t.first] = YAML::Load(ItemConverter<T, std::string>()(t.second));
+        }
+
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template<class T>
+class ItemConverter<std::string, std::unordered_map<std::string, T>>
+{
+public:
+    std::unordered_map<std::string, T> operator()(std::string& val)
+    {
+        std::stringstream ss;
+        std::unordered_map<std::string, T> map;
+        YAML::Node node = YAML::Load(val);
+        
+        for(int i = 0; i < node.size(); i++)
+        {
+            ss.str("");
+            ss << node[i].second;
+            map[node[i].first] = ItemConverter<string, T>()(ss.str());
+        }
+        
+        return map;
+    }
+};
+
+template<class T>
+class ItemConverter<std::unordered_map<std::string, T>, std::string>
+{
+public:
+    std::string operator()(std::unordered_map<std::string, T>& val)
+    {
+        YAML::Node node(YAML::NodeType::Map);
+        for(auto& t: val)
+        {
+            node[t.first] = YAML::Load(ItemConverter<T, std::string>()(t.second));
+        }
+
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
 
 #endif
