@@ -25,56 +25,37 @@ bool FileSystem::OpenForWrite(std::ofstream& ofs, const std::string& filename
 
 bool FileSystem::Mkdir(const std::string& dirname) 
 {
-    if(__lstat(dirname.c_str()) == 0) 
-    {
-        return true;
-    }
-    char* path = strdup(dirname.c_str());
-    char* ptr = strchr(path + 1, '/');
-    do 
-    {
-        for(; ptr; *ptr = '/', ptr = strchr(ptr + 1, '/')) 
-        {
-            *ptr = '\0';
-            if(__mkdir(path) != 0) 
-            {
-                break;
-            }
-        }
-
-        if(ptr != nullptr || __mkdir(path) != 0) 
-        {
-            break;
-        }
-
-        free(path);
-        return true;
-    } while(0);
-    free(path);
-    return false;
+    if(boost::filesystem::exists(dirname)) return true;
+    return boost::filesystem::create_directories(dirname);
 }
 
-std::string FileSystem::Dirname(const std::string& filename) 
+std::string FileSystem::Dirname(const std::string &filename)
 {
-    if(filename.empty()) 
-    {
-        return ".";
-    }
-    auto pos = filename.rfind('/');
-    if(pos == 0) 
-    {
-        return "/";
-    } 
-    if(pos == std::string::npos) 
-    {
-        return ".";
-    } 
-    
-    return filename.substr(0, pos);
-    
+    if(!boost::filesystem::exists(filename))    return "";
+    return boost::filesystem::path(filename).parent_path().string();
 }
 
-int FileSystem::__lstat(const char* file, struct stat* st) 
+std::string FileSystem::Filename(const std::string& filename)
+{
+    if(!boost::filesystem::exists(filename))    return "";
+    return boost::filesystem::path(filename).filename().string();
+}
+
+void FileSystem::GetAllFile(const std::string &directory, const std::string& exe, std::list<std::string>& fileList)
+{
+    boost::filesystem::path path(directory);
+    if(!boost::filesystem::exists(directory) || !boost::filesystem::is_directory(path)) return;
+
+    for (boost::filesystem::directory_entry& file : boost::filesystem::directory_iterator(path)) 
+    {
+        if (boost::filesystem::is_regular_file(file.status()) && file.path().extension() == exe) 
+        {
+            fileList.push_back(file.path().filename().string());
+        }
+    }
+}
+
+int FileSystem::__lstat(const char *file, struct stat *st)
 {
     struct stat lst;
     int ret = lstat(file, &lst);
@@ -85,7 +66,7 @@ int FileSystem::__lstat(const char* file, struct stat* st)
     return ret;
 }
 
-int FileSystem::__mkdir(const char* dirname) 
+int FileSystem::MkLimitedDir(const char* dirname) 
 {
     if(access(dirname, F_OK) == 0) 
     {
@@ -93,4 +74,20 @@ int FileSystem::__mkdir(const char* dirname)
     }
     return mkdir(dirname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
+
+std::string FileSystem::InitialPath()
+{
+    return boost::filesystem::initial_path().string();
+}
+
+std::string FileSystem::WorkPath()
+{
+    return boost::filesystem::current_path().string();
+}
+
+void FileSystem::WorkPath(const std::string &str)
+{
+    boost::filesystem::current_path(str);
+}
+
 #endif

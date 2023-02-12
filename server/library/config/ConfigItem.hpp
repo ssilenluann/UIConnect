@@ -89,13 +89,13 @@ public:
 
     T getValue()
     {
-        ConfigMutex::ReadLock(m_mutex);
-        return m_val = v;
-    }   
+        ConfigMutex::ReadLock lock(m_mutex);
+        return m_val;
+    }
 
     std::string getTypeName() override
     {
-        return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr, nullptr);
+        return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
     }    
 
     uint64_t addListener(onConfigChangedCB cb)
@@ -117,7 +117,7 @@ public:
     {
         ConfigMutex::ReadLock lock(m_mutex);
         auto it = m_cbs.find(cbId);
-        return it == cbs.end() ? nullptr : it->second;
+        return it == m_cbs.end() ? nullptr : it->second;
     }
 
     void clearListener()

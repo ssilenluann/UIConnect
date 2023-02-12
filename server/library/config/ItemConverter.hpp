@@ -12,7 +12,7 @@
 #include <unordered_set>
 #include <functional>
 #include <boost/lexical_cast.hpp>
-#include <yaml-cpp/yaml.h>
+#include "yaml-cpp/yaml.h"
 
 // convert item content from source type(S) to target type(T)
 template<class S, class T>
@@ -190,11 +190,11 @@ public:
         std::map<std::string, T> map;
         YAML::Node node = YAML::Load(val);
         
-        for(int i = 0; i < node.size(); i++)
+        for(auto it = node.begin(); it != node.end(); it++)
         {
             ss.str("");
-            ss << node[i].second;
-            map[node[i].first] = ItemConverter<string, T>()(ss.str());
+            ss << it->second;
+            map[it->first] = ItemConverter<std::string, T>()(ss.str());
         }
         
         return map;
@@ -229,11 +229,11 @@ public:
         std::unordered_map<std::string, T> map;
         YAML::Node node = YAML::Load(val);
         
-        for(int i = 0; i < node.size(); i++)
+        for(auto it = node.begin(); it != node.end(); it++)
         {
             ss.str("");
-            ss << node[i].second;
-            map[node[i].first] = ItemConverter<string, T>()(ss.str());
+            ss << it->second;
+            map[it->first] = ItemConverter<std::string, T>()(ss.str());
         }
         
         return map;

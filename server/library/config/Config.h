@@ -31,14 +31,14 @@ public:
             throw std::invalid_argument(name);
         }
 
-        ConfigItem<T>::ptr v(new ConfigItem<T>(name, default_value, description));
+        typename ConfigItem<T>::ptr v(new ConfigItem<T>(name, defaultValue, description));
         GetData()[name] = v;
         return v;
     }
 
     template<class T>
     static typename ConfigItem<T>::ptr Search(const std::string& name) {
-        RWMutexType::ReadLock lock(GetMutex());
+        ConfigMutex::ReadLock lock(GetMutex());
         auto it = GetData().find(name);
         if(it == GetData().end()) {
             return nullptr;

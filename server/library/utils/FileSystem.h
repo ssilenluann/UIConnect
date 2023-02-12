@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
-
+#include <boost/filesystem.hpp>
 #include <fstream>
 
 class FileSystem
@@ -17,9 +17,15 @@ public:
                     ,std::ios_base::openmode mode);
     static bool Mkdir(const std::string& dirname);
     static std::string Dirname(const std::string& filename);
+    static std::string Filename(const std::string& filename);
+    static void GetAllFile(const std::string &directory, const std::string& exe, std::list<std::string>& fileList);
 
-    static int __mkdir(const char* dirname);
+    static int MkLimitedDir(const char* dirname);
     static int __lstat(const char* file, struct stat* st = nullptr);
+
+    static std::string InitialPath();
+    static std::string WorkPath();
+    static void WorkPath(const std::string& path);
 };
 
 #endif

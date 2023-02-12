@@ -1,8 +1,11 @@
 #ifndef CONFIG_CONFIG_CPP
 #define CONFIG_CONFIG_CPP
 
-#include "Config.h"
+#include <iostream>
 
+#include "Config.h"
+#include "../ProgramOpt.h"
+#include "../utils/FileSystem.h"
 #include "../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
@@ -52,9 +55,28 @@ void Config::LoadFromYaml(const YAML::Node& root)
     }
 }
 
-void Config::LoadFromConfDir(const std::string& path, bool force = false)
+void Config::LoadFromConfDir(const std::string& path, bool force)
 {
+    std::string confDir = EnvMgr::GetInstance()->getAbsolutePath(path);
+    std::list<std::string> files;
+    FileSystem::GetAllFile(confDir, "yaml", files);
 
+    for(auto& i: files)
+    {
+        try
+        {
+            YAML::Node root = YAML::LoadFile(i);
+            LoadFromYaml(root);
+            LOG_INFO(g_logger) << "LoadConfFile file="
+                << i << " ok";
+        }
+        catch(const std::exception& e)
+        {
+            LOG_ERROR(g_logger) << "LoadConfFile file="
+                << i << " failed";
+        }
+        
+    }
 }
 
 ConfigItemBase::ptr Config::SearchBase(const std::string& name)
@@ -66,7 +88,10 @@ ConfigItemBase::ptr Config::SearchBase(const std::string& name)
 
 void Config::Visit(std::function<void(ConfigItemBase::ptr)> cb)
 {
+    ConfigMutex::ReadLock lock(GetMutex());
 
+    for(auto it = GetData().begin(); it != GetData().end(); it++)
+        cb(it->second);
 }
 
 bool Config::IsNodeNameValid(const std::string& name)

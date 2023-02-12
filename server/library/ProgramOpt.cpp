@@ -1,0 +1,78 @@
+#ifndef PROGRAMOPT_CPP
+#define PROGRAMOPT_CPP
+
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+
+#include "config/Config.h"
+#include "ProgramOpt.h"
+#include "log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
+
+bool ProgramOpt::parse(int argc, char **argv)
+{
+    int pid = getpid();
+    
+    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, m_opts), m_args);
+    boost::program_options::notify(m_args);
+
+    m_exe = FileSystem::InitialPath();
+    m_cwd = FileSystem::Dirname(m_exe);
+    m_program = FileSystem::Filename(m_exe);
+}
+
+void ProgramOpt::addOptions(const std::string &param, const std::string &description)
+{    
+    RWMutex::WriteLock lock(m_mutex);
+    m_opts.add_options()(param.c_str(), description.c_str());
+}
+
+bool ProgramOpt::hasParam(const std::string &param)
+{
+    RWMutex::ReadLock lock(m_mutex);
+    return m_args.find(param) != m_args.end();
+}
+
+void ProgramOpt::delParam(const std::string &param)
+{
+    RWMutex::WriteLock lock(m_mutex);
+    m_args.erase(param);
+}
+
+bool ProgramOpt::setEnv(const std::string &param, const std::string &val)
+{
+    return setenv(param.c_str(), val.c_str(), 1) >= 0;
+}
+
+std::string ProgramOpt::getEnv(const std::string &param, const std::string &default_value)
+{
+    const char* v = getenv(param.c_str());
+    return v == nullptr ? default_value : v;
+}
+
+std::string ProgramOpt::getAbsolutePath(const std::string &path) const
+{
+    if(path.empty())    return "/";
+    if(path[0] == '/')  return path;
+
+    return m_cwd + path;
+}
+
+std::string ProgramOpt::getAbsoluteWorkPath(const std::string &path) const
+{
+    if(path.empty())    return "/";
+    if(path[0] == '/')  return path;
+
+    static ConfigItem<std::string>::ptr s_server_work_path = Config::Search<std::string>("server.work_path");
+    return s_server_work_path->getValue() + "/" + path;
+}
+
+std::string ProgramOpt::getConfigPath()
+{
+    return getAbsolutePath(get<std::string>("c", "conf"));
+}
+
+#endif

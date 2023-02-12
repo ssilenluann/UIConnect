@@ -4,8 +4,8 @@ project(uiconnect)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 
-include_directories(./external/repidjson/)
-include_directories(./external/yaml-cpp/)
+include_directories(./external/)
+include_directories(./external/)
 
 include_directories(./library/)
 include_directories(./library/log/)
@@ -17,9 +17,9 @@ include_directories(./library/network/event/)
 include_directories(./library/network/socket/)
 include_directories(./library/utils)
 
-
 set(LIB_SRC 
 	./library/Mutex.cpp
+	./library/ProgramOpt.cpp
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/log/LogFormatter.cpp
@@ -46,6 +46,9 @@ set(LIB_SRC
 	./library/utils/FileSystem.cpp
 	./library/utils/ThreadUtil.cpp
 	./library/config/ItemConverter.hpp
+	./library/config/ConfigItem.hpp
+	./library/config/Config.cpp
+	
 )
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
