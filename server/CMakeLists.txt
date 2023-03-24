@@ -16,7 +16,7 @@ include_directories(./library/network/epoll/)
 include_directories(./library/network/event/)
 include_directories(./library/network/socket/)
 include_directories(./library/utils)
-
+include_directories(./external/yaml-cpp)
 set(LIB_SRC 
 	./library/Mutex.cpp
 	./library/ProgramOpt.cpp
@@ -50,16 +50,29 @@ set(LIB_SRC
 	./library/config/Config.cpp
 	
 )
-
+	
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # SET_TARGET_PROPERTIES(dllname PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../bin)
 
-## import dynamic library directory
+## set dynamic library directory
 link_directories(./lib)
 
 add_executable(test_server ./tests/TestTcpServer.cpp ${LIB_SRC})
-target_link_libraries(test_server libyaml-cpp.so)
+
+target_link_libraries(test_server PUBLIC libboost_program_options.a
+libyaml-cpp.so
+libboost_filesystem.a
+)
 
 add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
+target_link_libraries(test_log PUBLIC libboost_program_options.a
+libyaml-cpp.so
+libboost_filesystem.a
+)
+
 add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
+target_link_libraries(test_client PUBLIC libboost_program_options.a
+libyaml-cpp.so
+libboost_filesystem.a
+)

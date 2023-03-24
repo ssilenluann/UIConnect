@@ -13,7 +13,8 @@
 #include <iostream>
 
 #define thread_count 2
-#define client_count_per_thread 1500
+
+#define client_count_per_thread 20
 
 std::vector<std::list<std::shared_ptr<TcpSocket>>> g_sockets;
 std::vector<std::list<std::shared_ptr<Buffer>>> g_buffers;
