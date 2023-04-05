@@ -6,7 +6,7 @@
 class LogLevel {
 public:
     enum Level {
-        UNKNOW = 0,
+        UNKNOWN = 0,
         DEBUG = 1,
         INFO = 2,
         WARN = 3,

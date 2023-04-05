@@ -16,10 +16,11 @@ class LogFileOutputter : public LogOutputter
 	
 public:
     typedef std::shared_ptr<LogFileOutputter> ptr;
-    LogFileOutputter(const std::string fileName, std::string pattern = "");
+    LogFileOutputter(const std::string fileName = "", std::string pattern = "");
     void log(Logger::ptr logger, LogLevel::Level level, LogItem::ptr item) override;
     std::string toYamlString() override;
     bool reopen();
+    bool reopen(const std::string fileName);
 
 private:
     std::string m_fileName;

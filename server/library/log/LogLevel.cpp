@@ -18,9 +18,9 @@ const char* LogLevel::ToString(LogLevel::Level level)
     XX(FATAL);
 #undef XX
     default:
-        return "UNKNOW";
+        return "UNKNOWN";
     }
-    return "UNKNOW";
+    return "UNKNOWN";
 }
 
 LogLevel::Level LogLevel::FromString(const std::string& str) 
@@ -40,7 +40,7 @@ LogLevel::Level LogLevel::FromString(const std::string& str)
     XX(WARN, WARN);
     XX(ERROR, ERROR);
     XX(FATAL, FATAL);
-    return LogLevel::UNKNOW;
+    return LogLevel::UNKNOWN;
 #undef XX
 }
 

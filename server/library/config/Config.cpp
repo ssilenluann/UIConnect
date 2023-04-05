@@ -55,6 +55,7 @@ void Config::LoadFromYaml(const YAML::Node& root)
     }
 }
 
+static std::map<std::string, uint64_t> s_conf_file_mod_time;
 void Config::LoadFromConfDir(const std::string& path, bool force)
 {
     std::list<std::string> files;
@@ -62,6 +63,16 @@ void Config::LoadFromConfDir(const std::string& path, bool force)
 
     for(auto& i: files)
     {
+        struct stat st;
+        lstat(i.c_str(), &st);
+
+        if(!force 
+            && s_conf_file_mod_time.find(i) != s_conf_file_mod_time.end()
+            && s_conf_file_mod_time[i] == (uint64_t)st.st_mtime
+            )
+            continue;   // config file not changed since last load
+
+        s_conf_file_mod_time[i] = (uint64_t)st.st_mtime; // update config file update time
         try
         {
             YAML::Node root = YAML::LoadFile(i);

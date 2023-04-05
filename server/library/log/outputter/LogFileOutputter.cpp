@@ -3,11 +3,12 @@
 #include <iostream>
 
 #include "LogFileOutputter.h"
+#include "Logger.h"
 
 LogFileOutputter::LogFileOutputter(const std::string filename, std::string pattern)
 : LogOutputter(pattern), m_fileName(filename) 
 {
-    reopen();
+    if(!filename.empty()) reopen();
 }
 
 void LogFileOutputter::log(Logger::ptr logger, LogLevel::Level level, LogItem::ptr item) 
@@ -50,12 +51,22 @@ std::string LogFileOutputter::toYamlString()
 
 bool LogFileOutputter::reopen() 
 {
+    bool retp = true;
     MutexType::Lock lock(m_mutex);
     if(m_fileStream) 
     {
         m_fileStream.close();
     }
-    return FileSystem::OpenForWrite(m_fileStream, m_fileName, std::ios::app);
+
+    retp =  FileSystem::OpenForWrite(m_fileStream, m_fileName, std::ios::app);
+    if(!retp)   LOG_ERROR(LOG_ROOT()) << "open file: " << m_fileName << "failed";
+    return retp;
+}
+
+bool LogFileOutputter::reopen(const std::string fileName)
+{
+    m_fileName = fileName;
+    reopen();
 }
 
 #endif

@@ -31,7 +31,7 @@ bool FileSystem::Mkdir(const std::string& dirname)
 
 std::string FileSystem::Dirname(const std::string &filename)
 {
-    if(!boost::filesystem::exists(filename))    return "";
+    // if(!boost::filesystem::exists(filename))    return "";
     return boost::filesystem::path(filename).parent_path().string();
 }
 

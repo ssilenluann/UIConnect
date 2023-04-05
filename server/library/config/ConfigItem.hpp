@@ -69,6 +69,7 @@ public:
         catch(const std::exception& e)
         {
             LOG_INFO(LOG_NAME("system")) << e.what();
+            LOG_INFO(LOG_NAME("system")) << "val: " << val;
         }
         
     }
