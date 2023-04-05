@@ -1,5 +1,5 @@
-#ifndef PROGRAMOPT_H
-#define PROGRAMOPT_H
+#ifndef PROGRAMOPT_HPP
+#define PROGRAMOPT_HPP
 #define BOOST_PROGRAM_OPTIONS_NO_LIB
 
 #include <map>
@@ -7,6 +7,7 @@
 #include <string>
 #include <fstream>
 #include <boost/program_options.hpp>
+
 
 #include "Mutex.h"
 #include "Singleton.h"
@@ -18,24 +19,28 @@ class ProgramOpt
 public:
     virtual ~ProgramOpt(){}
 
-    bool parse(int argc, char** argv);
+    bool parse(int argc, char **argv);
 
+    // add option and description
     void addOptions(const std::string& param, const std::string& description);
 
+    // add program option and set default value (user set this option but didn't specify the value)
     template<class T>
-    void addOptionsImplicit(const std::string& param, T& val, const std::string& description)
+    void addOptionsImplicit(const std::string& param, const T& val, const std::string& description)
     {
         RWMutex::WriteLock lock(m_mutex);
         m_opts.add_options()(param.c_str(), boost::program_options::value<T>()->implicit_value(val), description.c_str());
     }
 
+    // add program option and set default value (user didn't set this option)
     template<class T>
-    void addOptionsDefault(const std::string& param, T& val, const std::string& description)
+    void addOptionsDefault(const std::string& param, const T& val, const std::string& description)
     {
         RWMutex::WriteLock lock(m_mutex);
-        m_opts.add_options()(param.c_str(), boost::program_options::value<T>()->default_val(val), description.c_str());
+        m_opts.add_options()(param.c_str(), boost::program_options::value<T>()->default_value(val), description.c_str());
     }
 
+    // add program option whose value is an array
     template<class T>
     void addOptionsMultiToken(const std::string& param, const std::string& description)
     {
@@ -43,7 +48,10 @@ public:
         m_opts.add_options()(param.c_str(), boost::program_options::value<std::vector<T>>()->multitoken(), description.c_str());
     }
 
+    // check whether user set a option
     bool hasParam(const std::string& param);
+
+    // delete user input after parse
     void delParam(const std::string& param);
 
     template<class T>
@@ -53,9 +61,19 @@ public:
         return m_args.find(param) == m_args.end() ? default_value : m_args.at(param).as<T>();
     }
 
-    bool setEnv(const std::string& param, const std::string& val);
-    std::string getEnv(const std::string& param, const std::string& default_value = "");
+    boost::program_options::variables_map& getArgs()
+    {
+        return m_args;
+    }
 
+    boost::program_options::options_description& getOpts()
+    {
+        return m_opts;
+    }
+
+    bool setEnv(const std::string& param, const std::string& val);
+
+    std::string getEnv(const std::string& param, const std::string& default_value = "");
     std::string getAbsolutePath(const std::string& path) const;
     std::string getAbsoluteWorkPath(const std::string& path) const;
     std::string getConfigPath();

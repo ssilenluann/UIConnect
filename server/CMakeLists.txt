@@ -4,6 +4,7 @@ project(uiconnect)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 
+
 include_directories(./external/)
 include_directories(./external/)
 
@@ -45,6 +46,7 @@ set(LIB_SRC
 	./library/network/socket/TcpSocket.cpp
 	./library/utils/FileSystem.cpp
 	./library/utils/ThreadUtil.cpp
+	./library/utils/StringUtil.cpp
 	./library/config/ItemConverter.hpp
 	./library/config/ConfigItem.hpp
 	./library/config/Config.cpp
@@ -58,21 +60,33 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 ## set dynamic library directory
 link_directories(./lib)
 
-add_executable(test_server ./tests/TestTcpServer.cpp ${LIB_SRC})
+# add_executable(test_server ./tests/TestTcpServer.cpp ${LIB_SRC})
+# # target_link_options(test_server PUBLIC "-fPIE")
+# target_link_libraries(test_server PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
 
-target_link_libraries(test_server PUBLIC libboost_program_options.a
-libyaml-cpp.so
-libboost_filesystem.a
-)
+# add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
+# target_link_libraries(test_log PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
 
-add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
-target_link_libraries(test_log PUBLIC libboost_program_options.a
-libyaml-cpp.so
-libboost_filesystem.a
-)
+# add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
+# target_link_libraries(test_client PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
 
-add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
-target_link_libraries(test_client PUBLIC libboost_program_options.a
+# add_executable(test_prog_opt ./tests/TestProgOpt.cpp ${LIB_SRC})
+# target_link_libraries(test_prog_opt PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
+
+add_executable(test_config ./tests/TestConfig.cpp ${LIB_SRC})
+target_link_libraries(test_config PUBLIC libboost_program_options.a
 libyaml-cpp.so
 libboost_filesystem.a
 )

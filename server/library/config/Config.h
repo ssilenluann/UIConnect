@@ -2,6 +2,8 @@
 #define CONFIG_CONFIG_H
 
 #include "ConfigItem.hpp"
+#include "../utils/StringUtil.h"
+#include "../log/Logger.h"
 
 class Config
 {
@@ -19,15 +21,17 @@ public:
             auto tmp = std::dynamic_pointer_cast<ConfigItem<T>>(it->second);
             if(!tmp)
             {
-                // TODO: LOG
+                LOG_ERROR(LOG_ROOT()) << "Lookup name=" << name << " exists but type not "
+                        << StringUtil::TypeToName<T>() << " real_type=" << it->second->getTypeName()
+                        << " " << it->second->toString();
                 return nullptr;
             }
             return tmp;
         }
 
-        if(IsNodeNameValid(name))
+        if(!IsNodeNameValid(name))
         {
-            // TODO: Log
+            LOG_ERROR(LOG_ROOT()) << "Lookup name invalid: " << name;
             throw std::invalid_argument(name);
         }
 
@@ -43,7 +47,7 @@ public:
         if(it == GetData().end()) {
             return nullptr;
         }
-        return std::dynamic_pointer_cast<ConfigItem<T> >(it->second);
+        return std::dynamic_pointer_cast<ConfigItem<T>>(it->second);
     }
 
     /**

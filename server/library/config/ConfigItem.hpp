@@ -8,6 +8,7 @@
 
 #include "ItemConverter.hpp"
 #include "../Mutex.h"
+#include "../log/Logger.h"
 
 class ConfigItemBase
 {
@@ -53,7 +54,7 @@ public:
         }
         catch(const std::exception& e)
         {
-            // std::cerr << e.what() << '\n';
+            LOG_INFO(LOG_NAME("system")) << e.what();
         }
         return "";
         
@@ -67,7 +68,7 @@ public:
         }
         catch(const std::exception& e)
         {
-            // std::cerr << e.what() << '\n';
+            LOG_INFO(LOG_NAME("system")) << e.what();
         }
         
     }
@@ -75,7 +76,7 @@ public:
     void setValue(const T& v)
     {
         {
-            ConfigMutex::ReadLock(m_mutex);
+            ConfigMutex::ReadLock lock(m_mutex);
             if(v == m_val)   return;
 
             // callback
@@ -83,7 +84,7 @@ public:
                 i.second(m_val, v);
         }
 
-        ConfigMutex::WriteLock(m_mutex);
+        ConfigMutex::WriteLock lock(m_mutex);
         m_val = v;
     }
 

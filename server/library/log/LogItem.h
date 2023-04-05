@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "LogLevel.h"
+
 class Logger;
 /**
  * @brief class for log content info
@@ -13,10 +14,11 @@ class LogItem {
 public:
     typedef std::shared_ptr<LogItem> ptr;
 
-    LogItem(std::shared_ptr<Logger> logger, LogLevel::Level level
-            ,const char* file, int32_t line, uint32_t elapse
-            ,uint32_t thread_id, uint32_t fiber_id, uint64_t time
-            ,const std::string& thread_name);
+    LogItem(std::shared_ptr<Logger> logger, 
+        LogLevel::Level level
+        ,const char* file, int32_t line, uint32_t elapse
+        ,uint32_t thread_id, uint32_t fiber_id, uint64_t time
+        ,const std::string& thread_name);
 
     const char* getFile() const { return m_file;}
 

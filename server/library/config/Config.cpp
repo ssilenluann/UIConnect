@@ -42,11 +42,11 @@ void Config::LoadFromYaml(const YAML::Node& root)
 
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
         ConfigItemBase::ptr item = SearchBase(key);
-        if(item != nullptr && !i.second.Scalar().empty())
+        if(item != nullptr && i.second.IsScalar())
         {
             item->fromString(i.second.Scalar());
         }
-        if(item != nullptr && i.second.Scalar().empty())
+        else if(item != nullptr && !i.second.IsScalar())
         {
             std::stringstream ss;
             ss << i.second;
@@ -57,9 +57,8 @@ void Config::LoadFromYaml(const YAML::Node& root)
 
 void Config::LoadFromConfDir(const std::string& path, bool force)
 {
-    std::string confDir = EnvMgr::GetInstance()->getAbsolutePath(path);
     std::list<std::string> files;
-    FileSystem::GetAllFile(confDir, "yaml", files);
+    FileSystem::GetAllFilePath(path, ".yml", files);
 
     for(auto& i: files)
     {
@@ -74,6 +73,7 @@ void Config::LoadFromConfDir(const std::string& path, bool force)
         {
             LOG_ERROR(g_logger) << "LoadConfFile file="
                 << i << " failed";
+            LOG_ERROR(g_logger) << e.what();
         }
         
     }

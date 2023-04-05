@@ -41,7 +41,7 @@ std::string FileSystem::Filename(const std::string& filename)
     return boost::filesystem::path(filename).filename().string();
 }
 
-void FileSystem::GetAllFile(const std::string &directory, const std::string& exe, std::list<std::string>& fileList)
+void FileSystem::GetAllFileName(const std::string &directory, const std::string& exe, std::list<std::string>& fileList)
 {
     boost::filesystem::path path(directory);
     if(!boost::filesystem::exists(directory) || !boost::filesystem::is_directory(path)) return;
@@ -51,6 +51,20 @@ void FileSystem::GetAllFile(const std::string &directory, const std::string& exe
         if (boost::filesystem::is_regular_file(file.status()) && file.path().extension() == exe) 
         {
             fileList.push_back(file.path().filename().string());
+        }
+    }
+}
+
+void FileSystem::GetAllFilePath(const std::string &directory, const std::string& exe, std::list<std::string>& fileList)
+{
+    boost::filesystem::path path(directory);
+    if(!boost::filesystem::exists(directory) || !boost::filesystem::is_directory(path)) return;
+
+    for (boost::filesystem::directory_entry& file : boost::filesystem::directory_iterator(path)) 
+    {
+        if (boost::filesystem::is_regular_file(file.status()) && file.path().extension() == exe) 
+        {
+            fileList.push_back(file.path().string());
         }
     }
 }

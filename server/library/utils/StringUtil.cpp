@@ -1,0 +1,4 @@
+#ifndef UTILS_STRINGUTIL_CPP
+#define UTILS_STRINGUTIL_CPP
+
+#endif

@@ -1,6 +1,6 @@
 #include <iostream>
 #include "./network/TcpServer.h"
-#include "./log/Logger.h"
+// #include "./log/Logger.h"
 #include "./log/outputter/LogStdoutOutputter.h"
 #include "./log/outputter/LogFileOutputter.h"
 

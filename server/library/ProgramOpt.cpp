@@ -5,23 +5,42 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
+#include <iostream>
 
 #include "config/Config.h"
 #include "ProgramOpt.h"
 #include "log/Logger.h"
-static Logger::ptr g_logger = LOG_NAME("system");
+static Logger::ptr g_logger = LOG_ROOT();
 
 bool ProgramOpt::parse(int argc, char **argv)
 {
     int pid = getpid();
+    bool retp = true;
+    try
+    {
+        boost::program_options::store(boost::program_options::parse_command_line(argc, argv, m_opts), m_args);
+        boost::program_options::notify(m_args);
+    }
+    catch(const boost::wrapexcept<boost::program_options::unknown_option>& e)
+    {
+        LOG_INFO(g_logger) << e.what() << '\n';
+        retp = false;
+    }
+    catch(const boost::wrapexcept<boost::program_options::invalid_option_value>& e)
+    {
+        LOG_INFO(g_logger) << e.what() << '\n';
+        retp = false;
+    }
+    catch(const boost::wrapexcept<boost::bad_any_cast>& e)
+    {
+        LOG_INFO(g_logger) << e.what() << '\n';
+        retp = false; 
+    }
     
-    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, m_opts), m_args);
-    boost::program_options::notify(m_args);
-
-    m_exe = FileSystem::InitialPath();
+    m_exe = FileSystem::WorkPath();
     m_cwd = FileSystem::Dirname(m_exe);
     m_program = FileSystem::Filename(m_exe);
+    return retp;
 }
 
 void ProgramOpt::addOptions(const std::string &param, const std::string &description)
@@ -33,7 +52,7 @@ void ProgramOpt::addOptions(const std::string &param, const std::string &descrip
 bool ProgramOpt::hasParam(const std::string &param)
 {
     RWMutex::ReadLock lock(m_mutex);
-    return m_args.find(param) != m_args.end();
+    return m_args.count(param) > 0;
 }
 
 void ProgramOpt::delParam(const std::string &param)
