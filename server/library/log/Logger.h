@@ -47,6 +47,23 @@
 
 #define LOG_NAME(name) LoggerMgr::GetInstance()->getLogger(name)
 
+#define LOG_ASSERT(x) \ 
+    if(!(x)) \
+    { \
+        LOG_ERROR(LOG_ROOT()) << "ASSERT: " #x \
+            << "\nbacktrace:\n" \ 
+            << ThreadUtil::Backtrace2String(); \
+    }
+
+#define LOG_ASSERT_W(x, w) \ 
+    if(!(x)) \
+    { \
+        LOG_ERROR(LOG_ROOT()) << "ASSERT: " #x \
+            << "\n" << w \
+            << "\nbacktrace:\n" \ 
+            << ThreadUtil::Backtrace2String(); \
+    }
+
 class LogOutputter;
 class LogFormatter;
 class Logger : public std::enable_shared_from_this<Logger> {

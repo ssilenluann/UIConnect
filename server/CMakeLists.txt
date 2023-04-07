@@ -85,8 +85,25 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-add_executable(test_config ./tests/TestConfig.cpp ${LIB_SRC})
-target_link_libraries(test_config PUBLIC libboost_program_options.a
+# add_executable(test_config ./tests/TestConfig.cpp ${LIB_SRC})
+# target_link_libraries(test_config PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
+# add_executable(test_thread ./tests/TestThread.cpp ${LIB_SRC})
+# target_link_libraries(test_thread PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
+
+# add_executable(test_coroutine ./tests/TestCoroutine.cpp)
+# target_link_libraries(test_coroutine PUBLIC libboost_coroutine.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
+
+add_executable(test_util ./tests/TestUtil.cpp ${LIB_SRC})
+target_link_libraries(test_util PUBLIC libboost_program_options.a
 libyaml-cpp.so
 libboost_filesystem.a
 )

@@ -6,7 +6,7 @@
 
 static Logger::ptr g_logger = LOG_NAME("system");
 
-Thread::Thread(): m_isQuited(false), m_isEnd(false){}
+Thread::Thread(const std::string &name): m_pid(0), m_name(name), m_isQuited(false), m_isEnd(false){}
 
 Thread::~Thread()
 {
@@ -23,6 +23,7 @@ void Thread::run()
     m_thread.reset(new std::thread(m_func));
     m_thread->detach();
     m_threadId = m_thread->get_id();
+    m_pid = ThreadUtil::GetThreadId();
 
 }
 

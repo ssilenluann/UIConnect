@@ -11,7 +11,7 @@ class Thread
 {
 
 public:
-    Thread();
+    Thread(const std::string& name = "");
     virtual ~Thread();
 
     Thread(const Thread& thread) = delete;
@@ -19,15 +19,17 @@ public:
 
     virtual void run();
     virtual void quit();
-    inline std::thread::id id()
-    {
-        return m_threadId;
-    }
+    inline std::thread::id id() { return m_threadId;}
+    inline pid_t pid() { return m_pid;}
+    inline std::string name() { return m_name;}
+
     void bind(std::function<void()> func);
     void entry();
     
 protected:
 	std::thread::id m_threadId;
+    pid_t m_pid;
+    std::string m_name;
     std::shared_ptr<std::thread> m_thread;
     std::function<void()> m_func;
     std::mutex m_mutex;
