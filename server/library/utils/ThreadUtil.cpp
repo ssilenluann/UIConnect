@@ -1,10 +1,15 @@
-#ifndef UTILS_THREAD_CPP
-#define UTILS_THREAD_CPP
+#ifndef UTILS_THREADUTIL_CPP
+#define UTILS_THREADUTIL_CPP
 #include <execinfo.h>
+
+#include "../log/Logger.h"
 
 #include "ThreadUtil.h"
 #include "StringUtil.h"
-#include "../log/Logger.h"
+
+#include <unistd.h>
+#include <sys/syscall.h>
+
 
 pid_t ThreadUtil::GetThreadId()
 {

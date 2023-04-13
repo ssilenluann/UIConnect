@@ -1,23 +1,38 @@
-#include <boost/coroutine/all.hpp>
-#include <iostream>
+#include "coroutine/Coroutine.h"
+#include "log/Logger.h"
+// #include "utils/ThreadUtil.h"
 
-void fibonacci(boost::coroutines::coroutine<int>::push_type& coro, int n) {
-    int a = 0, b = 1;
-    for (int i = 0; i < n; ++i) {
-        coro(a);
-        int tmp = b;
-        b += a;
-        a = tmp;
-    }
+static Logger::ptr g_logger = LOG_ROOT();
+
+void run()
+{
+    LOG_INFO(g_logger) << "run in coroutine";
+    LOG_INFO(g_logger) << "swap out";
+    Coroutine::Yield2Hold();
+    LOG_INFO(g_logger) << "coroutine func end";
+    LOG_INFO(g_logger) << "swap out";
+    Coroutine::Yield2Hold();
 }
 
-int main() {
-    boost::coroutines::coroutine<int>::push_type coro{fibonacci};
-    while (coro) {
-        int value = coro.get<int>();
-        std::cout << value << ' ';
-        coro(value);
-    }
-    std::cout << std::endl;
+void test()
+{
+    LOG_INFO(g_logger) << "main coroutine";
+    Coroutine::Init();
+    LOG_INFO(g_logger) << "main begin";
+
+    Coroutine::ptr coroutine(new Coroutine(run));
+    coroutine->call();
+    LOG_INFO(g_logger) << "main after call";
+
+    coroutine->call();
+    LOG_INFO(g_logger) << "main after end";
+
+    coroutine->call();
+    LOG_INFO(g_logger) << "test end";
+}
+
+int main() 
+{
+    test();
     return 0;
 }

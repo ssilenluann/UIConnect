@@ -1,10 +1,9 @@
-#ifndef UTILS_THREAD_H
-#define UTILS_THREAD_H
+#ifndef UTILS_THREADUTIL_H
+#define UTILS_THREADUTIL_H
 
-#include <unistd.h>
-#include <sys/syscall.h>
 #include <vector>
 #include <string>
+#pragma message("#include ThreadUtil.h")
 
 class ThreadUtil
 {

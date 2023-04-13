@@ -17,12 +17,14 @@ include_directories(./library/network/epoll/)
 include_directories(./library/network/event/)
 include_directories(./library/network/socket/)
 include_directories(./library/utils)
+include_directories(./library/coroutine)
 include_directories(./external/yaml-cpp)
 set(LIB_SRC 
 	./library/Mutex.cpp
 	./library/ProgramOpt.cpp
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
+	./library/coroutine/Coroutine.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -50,7 +52,6 @@ set(LIB_SRC
 	./library/config/ItemConverter.hpp
 	./library/config/ConfigItem.hpp
 	./library/config/Config.cpp
-	
 )
 	
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
@@ -96,14 +97,14 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-# add_executable(test_coroutine ./tests/TestCoroutine.cpp)
-# target_link_libraries(test_coroutine PUBLIC libboost_coroutine.a
-# libyaml-cpp.so
-# libboost_filesystem.a
-# )
-
-add_executable(test_util ./tests/TestUtil.cpp ${LIB_SRC})
-target_link_libraries(test_util PUBLIC libboost_program_options.a
+add_executable(test_coroutine ./tests/TestCoroutine.cpp ${LIB_SRC})
+target_link_libraries(test_coroutine PUBLIC libboost_program_options.a
 libyaml-cpp.so
 libboost_filesystem.a
 )
+
+# add_executable(test_util ./tests/TestUtil.cpp ${LIB_SRC})
+# target_link_libraries(test_util PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )

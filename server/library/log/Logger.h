@@ -11,6 +11,8 @@
 #include "../Mutex.h"
 #include "../utils/ThreadUtil.h"
 
+#pragma message("#include Logger.h")
+
 #define LOG_LEVEL(logger, level) \
     if(logger->getLevel() <= level) \
         LogItemWrap(LogItem::ptr(new LogItem(logger, level, \
