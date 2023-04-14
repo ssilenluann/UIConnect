@@ -42,33 +42,32 @@ public:
     void reset(std::function<void()> cb);
     
     /**
-     * @brief switch context from [main coroutine] to [this]
+     * @brief switch context from coroutine of the scheduler to current coroutine
      * @pre state != EXEC
      * @post state will set to be EXEC 
     */
     void swapIn();
 
     /**
-     * @brief switch context from [this] to [main coroutine]
+     * @brief switch context from current coroutine to coroutine of the scheduler
     */
     void swapOut();
 
     /**
-     * @brief save current context value into thread local memory, and set context of current thead to be [this]
+     * @brief switch from main coroutine to current coroutine, main coroutine value will be set into thread_local memory
     */
     void call();
 
     /**
-     * @brief get old context value from thread local memory, save current context value into [this], 
-     *        set current thread context as read from thread local memory
-     * 
+     * @brief switch from current coroutine to main coroutine, current coroutine value will be set into thread_local memory
     */
     void back();
 
     inline uint64_t getId() const { return m_id;}
     inline State getState() const { return m_state;}
+    inline void setState(State state) { m_state = state;}
 
-private:
+public:
 
     /**
      * @brief seve target coroutine info into thread local memory
@@ -83,7 +82,6 @@ private:
     */
     static Coroutine::ptr GetTemp();
 
-public:
     /**
      * @brief create a main Coroutine onject with current context and then save it into thread local memory
     */

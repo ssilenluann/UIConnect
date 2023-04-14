@@ -11,6 +11,8 @@ class Thread
 {
 
 public:
+    typedef std::shared_ptr<Thread> ptr;
+
     Thread(const std::string& name = "");
     virtual ~Thread();
 
@@ -25,7 +27,11 @@ public:
 
     void bind(std::function<void()> func);
     void entry();
-    
+
+    static const std::string& GetName();
+    static void SetName(const std::string& name);
+    void deteach();
+    void join();
 protected:
 	std::thread::id m_threadId;
     pid_t m_pid;

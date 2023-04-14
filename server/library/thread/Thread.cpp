@@ -4,6 +4,8 @@
 #include "Thread.h"
 #include "../log/Logger.h"
 
+static thread_local std::string t_thread_name = "UNKNOWN";
+
 static Logger::ptr g_logger = LOG_NAME("system");
 
 Thread::Thread(const std::string &name): m_pid(0), m_name(name), m_isQuited(false), m_isEnd(false){}
@@ -20,11 +22,10 @@ void Thread::run()
 {
     LOG_INFO(g_logger) << "thread start";
 
-    m_thread.reset(new std::thread(m_func));
-    m_thread->detach();
+    m_thread.reset(new std::thread(std::bind(&Thread::entry, this)));
     m_threadId = m_thread->get_id();
     m_pid = ThreadUtil::GetThreadId();
-
+    t_thread_name = m_name;
 }
 
 void Thread::entry()
@@ -40,10 +41,45 @@ void Thread::entry()
     LOG_ERROR(g_logger) << "thread entry function end";
     
     m_isEnd = true;
+    if(m_thread->joinable())
+        m_thread->join();
+}
+
+const std::string& Thread::GetName()
+{
+    return t_thread_name;
+}
+
+void Thread::SetName(const std::string& name)
+{
+    if(name.empty())    return;
+    
+    t_thread_name = name;
+}
+
+void Thread::deteach()
+{
+    if(m_thread->joinable())
+        m_thread->detach();
+    else
+        LOG_ASSERT_W(false, "thread is not joinable");
+}
+
+void Thread::join()
+{
+    if(m_thread->joinable())
+        m_thread->join();
+    else
+        LOG_ASSERT_W(false, "thread is not joinable");
 }
 
 void Thread::bind(std::function<void()> func)
 {
+    if(m_func)
+    {
+        LOG_ASSERT_W(false, "thread already has main func");
+        return;
+    }
     m_func = func;
 }
 

@@ -22,11 +22,11 @@ private:
         CoroutineThread(Coroutine::ptr* c, int thread): coroutine(std::move(*c)), threadId(thread) {}
         CoroutineThread(std::function<void()> f, int thread): cb(f), threadId(thread) {} 
         CoroutineThread(std::function<void()>* f, int thread): cb(std::move(*f)), threadId(thread) {} 
-
+        CoroutineThread(): threadId(-1) {}
         void reset()  
         {
             coroutine.reset();
-            cb.reset();
+            cb = nullptr;
             threadId = -1;
         }
         Coroutine::ptr coroutine;
@@ -39,6 +39,7 @@ public:
     virtual ~Scheduler();
 
     inline const std::string& getName() const {return m_name;}
+
     static Scheduler* GetThis();
     static Coroutine* GetMainCoroutine();
     void start();
@@ -89,33 +90,35 @@ protected:
     virtual void notify();
     // main schedule function
     void run();
-    virtual void stopping();
+    virtual bool stopping();
     // no task and run this func
     virtual void idle();
     void setThis();
-    inline void hasIdleThreads() {  return m_idleTHreadCount > 0;}
+    inline bool hasIdleThreads() {  return m_idleTHreadCount > 0;}
 
 private:
 
     template<class Task>
     bool scheduleNoLock(Task fc, int thread)
     {
-        bool emptyBefore = m_fibers.empty();
+        bool emptyBefore = m_coroutines.empty();
         CoroutineThread ct(fc, thread);
-        if(ct.fc || ct.cb)
+        if(ct.coroutine || ct.cb)
         {
-            m_coroutines.push_back(ft);
+            m_coroutines.push_back(ct);
         }
 
         return emptyBefore;
     }
+
+    void runTask(CoroutineThread& ct);
 
 private:
     MutexType m_mutex;
     std::vector<Thread::ptr> m_threads;
     std::list<CoroutineThread> m_coroutines;    // coroutines ready to run
     Coroutine::ptr m_rootCoroutine;     // schedule coroutines when use_caller is true
-    std:string m_name;  
+    std::string m_name;  
 
 protected:
     std::vector<int64_t> m_threadIds;
@@ -133,6 +136,6 @@ public:
     SchedulerSwitcher(std::shared_ptr<Scheduler> target);
     ~SchedulerSwitcher();
 private:
-    std::weak_ptr<SchedulerSwitcher> m_caller;
+    Scheduler* m_caller;
 };
 #endif

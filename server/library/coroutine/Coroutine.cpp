@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 #include "Coroutine.h"
+#include "Scheduler.h"
 #include "../log/Logger.h"
 #include "../log/LogConfItem.h"
 #include "../config/Config.h"
@@ -106,14 +107,20 @@ void Coroutine::reset(std::function<void()> cb)
 void Coroutine::swapIn()
 {
     SaveTemp(shared_from_this());
+    LOG_ASSERT(m_state != EXEC);
     m_state = EXEC;
+    if(swapcontext(&Scheduler::GetMainCoroutine()->m_ctx, &m_ctx))
+    {
+        LOG_ERROR(g_logger) << "swapcontext failed: " << strerror(errno);
+        LOG_ASSERT_W(false, "swapcontext");
+    }
     
 }
 
 void Coroutine::swapOut()
 {
-    SaveTemp(t_thread_main_coroutine);
-    if(swapcontext(&m_ctx, &t_thread_main_coroutine->m_ctx))
+    SaveTemp(Scheduler::GetMainCoroutine()->shared_from_this());
+    if(swapcontext(&m_ctx, &Scheduler::GetMainCoroutine()->m_ctx))
     {
         LOG_ERROR(g_logger) << "swapcontext failed: " << strerror(errno);
         LOG_ASSERT_W(false, "swapcontext");
@@ -179,7 +186,7 @@ void Coroutine::Yield2Hold()
 {
     Coroutine::ptr cur = GetTemp();
     LOG_ASSERT(cur->m_state == EXEC);
-    // cur->m_state = HOLD;
+    cur->m_state = HOLD;
     cur->swapOut();
 }
 
@@ -250,7 +257,10 @@ void Coroutine::CallerMainFunc()
             << std::endl
             << ThreadUtil::Backtrace2String();
     }
-
+    
+    // here, if we don't get the raw pointer and then reset the shared_ptr object 'cur',
+    // before the 'cur' destoried, the context has been switched out,
+    // so the use_count won't decrese, and lead to memory leak
     auto raw_ptr = cur.get();
     cur.reset();
     raw_ptr->back();

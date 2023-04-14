@@ -57,7 +57,7 @@ int TcpSocket::bind(const SockAddr& addr)
 	int size = addr.size();
 	if(::bind(*m_sock, addr, size) == -1)
 	{
-		LOG_FMT_FATAL(g_logger, "tcp bind error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
+		LOG_FMT_FATAL(g_logger, "tcp bind error, sock_fd = %d, errno = %d, %s", m_sock->fd(), errno, strerror(errno));
 		close();
 		return SOCKET_ERROR;
 	}
@@ -77,7 +77,7 @@ int TcpSocket::listen(int backlog)
 
 	if(::listen(*m_sock, backlog) == SOCKET_ERROR)
 	{
-		LOG_FMT_FATAL(g_logger, "tcp listen error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
+		LOG_FMT_FATAL(g_logger, "tcp listen error, sock_fd = %d, errno = %d", m_sock->fd(), errno, strerror(errno));
 		close();
 		return SOCKET_ERROR;
 	}
@@ -93,7 +93,7 @@ SOCKET TcpSocket::accept(SockAddr& addr)
 	int fd = ::accept4(*m_sock, addr, &size, SOCK_NONBLOCK | SOCK_CLOEXEC);
 	if(fd < 0)
 	{
-		LOG_FMT_ERROR(g_logger, "tcp accept error, sock_fd = %d, errno = %d", m_sock->fd(), errno);
+		LOG_FMT_ERROR(g_logger, "tcp accept error, sock_fd = %d, errno = %d", m_sock->fd(), errno, strerror(errno));
 		close();
 		return SOCKET_ERROR;
 	}

@@ -25,6 +25,7 @@ set(LIB_SRC
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/coroutine/Coroutine.cpp
+	./library/coroutine/Scheduler.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -55,7 +56,7 @@ set(LIB_SRC
 )
 	
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # SET_TARGET_PROPERTIES(dllname PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../bin)
 
 ## set dynamic library directory
@@ -97,14 +98,20 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-add_executable(test_coroutine ./tests/TestCoroutine.cpp ${LIB_SRC})
-target_link_libraries(test_coroutine PUBLIC libboost_program_options.a
-libyaml-cpp.so
-libboost_filesystem.a
-)
+# add_executable(test_coroutine ./tests/TestCoroutine.cpp ${LIB_SRC})
+# target_link_libraries(test_coroutine PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
 
 # add_executable(test_util ./tests/TestUtil.cpp ${LIB_SRC})
 # target_link_libraries(test_util PUBLIC libboost_program_options.a
 # libyaml-cpp.so
 # libboost_filesystem.a
 # )
+
+add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
+target_link_libraries(test_scheduler PUBLIC libboost_program_options.a
+libyaml-cpp.so
+libboost_filesystem.a
+)
