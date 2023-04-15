@@ -17,7 +17,7 @@
     if(logger->getLevel() <= level) \
         LogItemWrap(LogItem::ptr(new LogItem(logger, level, \
                         __FILE__, __LINE__, 0, ThreadUtil::GetThreadId(),\
-                0, time(0), ""))).getSS()
+                ThreadUtil::GetCoroutineId(), time(0), ""))).getSS()
 
 #define LOG_DEBUG(logger) LOG_LEVEL(logger, LogLevel::DEBUG)
 
@@ -33,7 +33,7 @@
     if(logger->getLevel() <= level) \
         LogItemWrap(LogItem::ptr(new LogItem(logger, level, \
                         __FILE__, __LINE__, 0, ThreadUtil::GetThreadId(),\
-                0, time(0), ""))).getItem()->format(fmt, __VA_ARGS__)
+                ThreadUtil::GetCoroutineId(), time(0), ""))).getItem()->format(fmt, __VA_ARGS__)
 
 #define LOG_FMT_DEBUG(logger, fmt, ...) LOG_FMT_LEVEL(logger, LogLevel::DEBUG, fmt, __VA_ARGS__)
 

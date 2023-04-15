@@ -4,7 +4,6 @@ project(uiconnect)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 
-
 include_directories(./external/)
 include_directories(./external/)
 
@@ -25,6 +24,7 @@ set(LIB_SRC
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/coroutine/Coroutine.cpp
+	./library/coroutine/CoroutineWorkThread.cpp
 	./library/coroutine/Scheduler.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp

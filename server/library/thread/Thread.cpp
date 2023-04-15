@@ -8,7 +8,7 @@ static thread_local std::string t_thread_name = "UNKNOWN";
 
 static Logger::ptr g_logger = LOG_NAME("system");
 
-Thread::Thread(const std::string &name): m_pid(0), m_name(name), m_isQuited(false), m_isEnd(false){}
+Thread::Thread(const std::string &name): m_pid(-1), m_name(name), m_isQuited(false), m_isEnd(false){}
 
 Thread::~Thread()
 {
@@ -20,7 +20,7 @@ Thread::~Thread()
 
 void Thread::run()
 {
-    LOG_INFO(g_logger) << "thread start";
+    LOG_INFO(g_logger) << "thread start, thread_name = " << m_name;
 
     m_thread.reset(new std::thread(std::bind(&Thread::entry, this)));
     m_threadId = m_thread->get_id();
@@ -30,7 +30,7 @@ void Thread::run()
 
 void Thread::entry()
 {
-    LOG_INFO(g_logger) << "thread entry start";
+    LOG_INFO(g_logger) << "thread entry start, thread_name = " << m_name;
     if(!m_func)
     {
         LOG_ERROR(g_logger) << "thread main func unvalid, thread entry exit";
@@ -38,11 +38,10 @@ void Thread::entry()
     }
 
     m_func();
-    LOG_ERROR(g_logger) << "thread entry function end";
+    LOG_ERROR(g_logger) << "thread entry function end, thread_name = " << m_name;
     
     m_isEnd = true;
-    if(m_thread->joinable())
-        m_thread->join();
+    m_cv.notify_all();
 }
 
 const std::string& Thread::GetName()
@@ -85,7 +84,7 @@ void Thread::bind(std::function<void()> func)
 
 void Thread::quit()
 {
-    if(!m_isQuited) return;
+    if(m_isQuited) return;
 
     LOG_INFO(g_logger) << "thread start to quit";
     // here is a block call, thread safety    

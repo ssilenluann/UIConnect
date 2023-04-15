@@ -4,6 +4,8 @@
 #include <ucontext.h>
 #include <functional>
 #include <memory>
+class Scheduler;
+
 class Coroutine: public std::enable_shared_from_this<Coroutine>
 {
 public:
@@ -42,26 +44,14 @@ public:
     void reset(std::function<void()> cb);
     
     /**
-     * @brief switch context from coroutine of the scheduler to current coroutine
-     * @pre state != EXEC
-     * @post state will set to be EXEC 
+     * @brief switch from main coroutine to current coroutine, main coroutine value will be set into thread_local memory
     */
     void swapIn();
 
     /**
-     * @brief switch context from current coroutine to coroutine of the scheduler
-    */
-    void swapOut();
-
-    /**
-     * @brief switch from main coroutine to current coroutine, main coroutine value will be set into thread_local memory
-    */
-    void call();
-
-    /**
      * @brief switch from current coroutine to main coroutine, current coroutine value will be set into thread_local memory
     */
-    void back();
+    void swapOut();
 
     inline uint64_t getId() const { return m_id;}
     inline State getState() const { return m_state;}

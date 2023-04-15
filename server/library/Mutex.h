@@ -8,8 +8,9 @@
 #include <semaphore.h>
 #include <stdint.h>
 #include <atomic>
-
+#include <iostream>
 #include "Noncopiable.h"
+#include "utils/ThreadUtil.h"
 
 // linux semaphore wrap class
 class Semaphore : Noncopyable 
@@ -155,6 +156,7 @@ public:
     }
 
     void lock() {
+        // std::cout << ThreadUtil::Backtrace2String();
         pthread_mutex_lock(&m_mutex);
     }
 

@@ -8,43 +8,28 @@
 
 #include "../Mutex.h"
 #include "Coroutine.h"
-#include "../thread/Thread.h"
-class Scheduler
+#include "../thread/ThreadPool.hpp"
+#include "CoroutineWorkThread.h"
+
+class Scheduler: public std::enable_shared_from_this<Scheduler>
 {
+public:
     typedef std::shared_ptr<Scheduler> ptr;
     typedef Mutex MutexType;
 
-private:
-    class CoroutineThread
-    {
-    public:
-        CoroutineThread(Coroutine::ptr c, int thread): coroutine(c), threadId(thread){}
-        CoroutineThread(Coroutine::ptr* c, int thread): coroutine(std::move(*c)), threadId(thread) {}
-        CoroutineThread(std::function<void()> f, int thread): cb(f), threadId(thread) {} 
-        CoroutineThread(std::function<void()>* f, int thread): cb(std::move(*f)), threadId(thread) {} 
-        CoroutineThread(): threadId(-1) {}
-        void reset()  
-        {
-            coroutine.reset();
-            cb = nullptr;
-            threadId = -1;
-        }
-        Coroutine::ptr coroutine;
-        std::function<void()> cb;
-        int threadId;
-    };
-
 public:
-    Scheduler(size_t threads = 1, bool use_caller = true, const std::string& name = "");
+    Scheduler(size_t threads = 1, const std::string& name = "");
     virtual ~Scheduler();
 
     inline const std::string& getName() const {return m_name;}
 
-    static Scheduler* GetThis();
-    static Coroutine* GetMainCoroutine();
     void start();
     void stop();
 
+    inline MutexType& mutex() { return m_mutex;}
+    inline std::list<ThreadJobTarget>& allCoroutines() {return m_coroutines;}
+    inline std::atomic<size_t>& activeThreadCount() { return m_activeThreadCount;}
+    inline std::atomic<size_t>& idleThreadCount() { return m_idleThreadCount;}
     /**
      * @brief schedule coroutine
      * @param[in] t coroutine or function
@@ -58,9 +43,6 @@ public:
             MutexType::Lock lock(m_mutex);
             emptyBefore = scheduleNoLock(t, thread);
         }
-
-        if(emptyBefore)
-            notify();
     }
 
     /**
@@ -79,22 +61,14 @@ public:
             }
         }
 
-        if(emptyBefore)
-            notify();
     }
 
-    void switchTo(int thread = -1);
     std::ostream& dump(std::ostream& os);
-protected:
-    // notify schduler there are tasks
-    virtual void notify();
-    // main schedule function
-    void run();
+
     virtual bool stopping();
-    // no task and run this func
-    virtual void idle();
-    void setThis();
-    inline bool hasIdleThreads() {  return m_idleTHreadCount > 0;}
+protected:
+
+    inline bool hasIdleThreads() {  return m_idleThreadCount > 0;}
 
 private:
 
@@ -102,7 +76,7 @@ private:
     bool scheduleNoLock(Task fc, int thread)
     {
         bool emptyBefore = m_coroutines.empty();
-        CoroutineThread ct(fc, thread);
+        ThreadJobTarget ct(fc, thread);
         if(ct.coroutine || ct.cb)
         {
             m_coroutines.push_back(ct);
@@ -111,31 +85,21 @@ private:
         return emptyBefore;
     }
 
-    void runTask(CoroutineThread& ct);
-
 private:
     MutexType m_mutex;
-    std::vector<Thread::ptr> m_threads;
-    std::list<CoroutineThread> m_coroutines;    // coroutines ready to run
+    std::list<ThreadJobTarget> m_coroutines;    // coroutines ready to run
     Coroutine::ptr m_rootCoroutine;     // schedule coroutines when use_caller is true
     std::string m_name;  
+
 
 protected:
     std::vector<int64_t> m_threadIds;
     size_t m_threadCount = 0;
     std::atomic<size_t> m_activeThreadCount = {0};
-    std::atomic<size_t> m_idleTHreadCount = {0};
+    std::atomic<size_t> m_idleThreadCount = {0};
     bool m_isStopping = true;
     bool m_autoStop = false;
     int64_t m_rootThreadId = 0;     // main thread(use_caller)
-};
-
-class SchedulerSwitcher: public Noncopyable
-{
-public:
-    SchedulerSwitcher(std::shared_ptr<Scheduler> target);
-    ~SchedulerSwitcher();
-private:
-    Scheduler* m_caller;
+    std::shared_ptr<CoroutineWorkThreadPool> m_threadPool;
 };
 #endif

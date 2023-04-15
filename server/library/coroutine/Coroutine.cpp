@@ -35,6 +35,7 @@ Coroutine::Coroutine()
 
     ++s_coroutine_count;
     LOG_DEBUG(g_logger) << "main coroutine created";
+
 }
 
 Coroutine::Coroutine(std::function<void()> cb, size_t stack_size, bool use_caller) : m_id(++s_coroutine_id), m_cb(cb)
@@ -107,29 +108,6 @@ void Coroutine::reset(std::function<void()> cb)
 void Coroutine::swapIn()
 {
     SaveTemp(shared_from_this());
-    LOG_ASSERT(m_state != EXEC);
-    m_state = EXEC;
-    if(swapcontext(&Scheduler::GetMainCoroutine()->m_ctx, &m_ctx))
-    {
-        LOG_ERROR(g_logger) << "swapcontext failed: " << strerror(errno);
-        LOG_ASSERT_W(false, "swapcontext");
-    }
-    
-}
-
-void Coroutine::swapOut()
-{
-    SaveTemp(Scheduler::GetMainCoroutine()->shared_from_this());
-    if(swapcontext(&m_ctx, &Scheduler::GetMainCoroutine()->m_ctx))
-    {
-        LOG_ERROR(g_logger) << "swapcontext failed: " << strerror(errno);
-        LOG_ASSERT_W(false, "swapcontext");
-    }
-}
-
-void Coroutine::call()
-{
-    SaveTemp(shared_from_this());
     m_state = EXEC;
     if(swapcontext(&t_thread_main_coroutine->m_ctx, &m_ctx))
     {
@@ -138,7 +116,7 @@ void Coroutine::call()
     }
 }
 
-void Coroutine::back()
+void Coroutine::swapOut()
 {
     SaveTemp(t_thread_main_coroutine);
     if(swapcontext(&m_ctx, &t_thread_main_coroutine->m_ctx))
@@ -199,9 +177,11 @@ void Coroutine::MainFunc()
 {
     Coroutine::ptr cur = GetTemp();
     LOG_ASSERT(cur);
-
+    
     try
-    {
+    {   
+        if(!cur->m_cb)
+            LOG_ASSERT(cur->m_cb);
         cur->m_cb();
         cur->m_cb = nullptr;
         cur->m_state = TERM;
@@ -263,14 +243,14 @@ void Coroutine::CallerMainFunc()
     // so the use_count won't decrese, and lead to memory leak
     auto raw_ptr = cur.get();
     cur.reset();
-    raw_ptr->back();
+    raw_ptr->swapOut();
     LOG_ASSERT_W(false, "coroutine should have been swithed out before");
 }
 
 uint64_t Coroutine::CurrentCoroutineId()
 {
-    if(t_thread_main_coroutine) {
-        return t_thread_main_coroutine->getId();
+    if(t_thread_temp_coroutine.lock() != nullptr) {
+        return t_thread_temp_coroutine.lock()->getId();
     }
     return 0;
 }

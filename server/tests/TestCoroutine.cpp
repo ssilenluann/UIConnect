@@ -21,13 +21,13 @@ void test()
     LOG_INFO(g_logger) << "main begin";
 
     Coroutine::ptr coroutine(new Coroutine(run));
-    coroutine->call();
+    coroutine->swapIn();
     LOG_INFO(g_logger) << "main after call";
 
-    coroutine->call();
+    coroutine->swapIn();
     LOG_INFO(g_logger) << "main after end";
 
-    coroutine->call();
+    coroutine->swapIn();
     LOG_INFO(g_logger) << "test end";
 }
 

@@ -28,6 +28,8 @@ public:
     static std::string Backtrace2String(int size = 64, int skip = 0, const std::string& prefix = "");
 
     static std::string demanle(const char* str);
+
+    static uint32_t GetCoroutineId();
 };
 
 #endif
