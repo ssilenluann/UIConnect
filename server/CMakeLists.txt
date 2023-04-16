@@ -24,7 +24,6 @@ set(LIB_SRC
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/coroutine/Coroutine.cpp
-	./library/coroutine/CoroutineWorkThread.cpp
 	./library/coroutine/Scheduler.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
@@ -115,3 +114,10 @@ target_link_libraries(test_scheduler PUBLIC libboost_program_options.a
 libyaml-cpp.so
 libboost_filesystem.a
 )
+
+add_executable(test_server ./tests/TestTcpServer.cpp ${LIB_SRC})
+target_link_libraries(test_server yaml-cpp.so)
+target_link_libraries(test_server libboost_program_options.so)
+
+# add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
+# add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
