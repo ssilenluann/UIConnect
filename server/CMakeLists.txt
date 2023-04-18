@@ -4,6 +4,15 @@ project(uiconnect)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 
+# static link boost component
+set(Boost_USE_STATIC_LIBS ON)
+# specify target link boost component
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
+if(NOT Boost_FOUND)
+	message(FATAL_ERROR "Could not find required Boost libraries")
+endif()
+
+include_directories(${Boost_INCLUDE_DIRS})
 include_directories(./external/)
 include_directories(./external/)
 
@@ -21,10 +30,12 @@ include_directories(./external/yaml-cpp)
 set(LIB_SRC 
 	./library/Mutex.cpp
 	./library/ProgramOpt.cpp
+	./library/TimerFunc.cpp
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/coroutine/Coroutine.cpp
 	./library/coroutine/Scheduler.cpp
+	./library/coroutine/IOManager.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -49,6 +60,7 @@ set(LIB_SRC
 	./library/utils/FileSystem.cpp
 	./library/utils/ThreadUtil.cpp
 	./library/utils/StringUtil.cpp
+	./library/utils/TimeUtil.cpp
 	./library/config/ItemConverter.hpp
 	./library/config/ConfigItem.hpp
 	./library/config/Config.cpp
@@ -74,11 +86,11 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-# add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
-# target_link_libraries(test_client PUBLIC libboost_program_options.a
-# libyaml-cpp.so
-# libboost_filesystem.a
-# )
+add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
+target_link_libraries(test_client PUBLIC libboost_program_options.a
+libyaml-cpp.so
+libboost_filesystem.a
+)
 
 # add_executable(test_prog_opt ./tests/TestProgOpt.cpp ${LIB_SRC})
 # target_link_libraries(test_prog_opt PUBLIC libboost_program_options.a
@@ -109,15 +121,25 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
-target_link_libraries(test_scheduler PUBLIC libboost_program_options.a
-libyaml-cpp.so
-libboost_filesystem.a
-)
+# add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
+# target_link_libraries(test_scheduler PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# )
 
-add_executable(test_server ./tests/TestTcpServer.cpp ${LIB_SRC})
-target_link_libraries(test_server yaml-cpp.so)
-target_link_libraries(test_server libboost_program_options.so)
+# add_executable(test_server ./tests/TestTcpServer.cpp ${LIB_SRC})
+# target_link_libraries(test_server yaml-cpp.so)
+# target_link_libraries(test_server libboost_program_options.so)
 
 # add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
 # add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
+
+# add_executable(test_epoll_timeout ./tests/TestEpollWait.cpp ${LIB_SRC}) 
+# target_link_libraries(test_epoll_timeout PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# )
+
+add_executable(test_io_manager ./tests/TestIoManager.cpp ${LIB_SRC})
+target_link_libraries(test_io_manager PUBLIC ${Boost_LIBRARIES}
+libyaml-cpp.so
+)

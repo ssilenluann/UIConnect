@@ -1,4 +1,3 @@
-#include "coroutine/Coroutine.h"
 #include "coroutine/Scheduler.h"
 #include "utils/ThreadUtil.h"
 #include "log/Logger.h"
@@ -15,7 +14,7 @@ void test_coroutine()
     // sleep(1);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     if(--s_count >= 0)
-        CoroutineWorkThread::GetScheduler()->schedule(&test_coroutine, ThreadUtil::GetThreadId());
+        Scheduler::GetScheduler()->schedule(&test_coroutine, ThreadUtil::GetThreadId());
 }
 
 int main()

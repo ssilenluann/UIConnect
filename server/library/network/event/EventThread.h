@@ -15,6 +15,7 @@ public:
     EventThread(const EventThread& thread) = delete;
     EventThread& operator =(const EventThread& rhs) = delete;
 
+    void run();
     void quit();
 	std::shared_ptr<EventLoop> getLoop();
     inline std::thread::id id()

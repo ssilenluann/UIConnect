@@ -30,7 +30,7 @@ void Thread::run()
 
 void Thread::entry()
 {
-    LOG_INFO(g_logger) << "thread entry start, thread_name = " << m_name;
+    // LOG_INFO(g_logger) << "thread entry start, thread_name = " << m_name;
     if(!m_func)
     {
         LOG_ERROR(g_logger) << "thread main func unvalid, thread entry exit";
@@ -38,7 +38,7 @@ void Thread::entry()
     }
 
     m_func();
-    LOG_ERROR(g_logger) << "thread entry function end, thread_name = " << m_name;
+    // LOG_ERROR(g_logger) << "thread entry function end, thread_name = " << m_name;
     
     m_isEnd = true;
     m_cv.notify_all();
@@ -56,7 +56,7 @@ void Thread::SetName(const std::string& name)
     t_thread_name = name;
 }
 
-void Thread::deteach()
+void Thread::detach()
 {
     if(m_thread->joinable())
         m_thread->detach();

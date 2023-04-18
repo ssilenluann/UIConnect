@@ -62,6 +62,7 @@ int TcpSocket::bind(const SockAddr& addr)
 		return SOCKET_ERROR;
 	}
 
+	LOG_DEBUG(g_logger) << "tcp bind seccessufully";
 	return 0;
 }
 
@@ -235,7 +236,7 @@ bool TcpSocket::isValid() { return m_sock != nullptr && *m_sock > SOCKET(0); }
 
 void TcpSocket::close()
 {
-	if (!isValid())
+	if (isValid())
 		m_sock->close();
 
 	LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", m_sock->fd());

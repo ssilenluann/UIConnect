@@ -21,6 +21,12 @@ EventThread::~EventThread()
 }
 
 
+void EventThread::run()
+{
+    Thread::run();
+    Thread::detach();
+}
+
 void EventThread::quit()
 {
     if(!m_isQuited)

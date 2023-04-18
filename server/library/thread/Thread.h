@@ -30,7 +30,7 @@ public:
 
     static const std::string& GetName();
     static void SetName(const std::string& name);
-    void deteach();
+    void detach();
     void join();
 protected:
 	std::thread::id m_threadId;

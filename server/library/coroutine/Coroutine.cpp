@@ -15,7 +15,7 @@ static Logger::ptr g_logger = LOG_NAME("system");
 static std::atomic<uint64_t> s_coroutine_id = {0};
 static std::atomic<uint64_t> s_coroutine_count = {0};
 
-static thread_local std::weak_ptr<Coroutine> t_thread_temp_coroutine;
+static thread_local std::weak_ptr<Coroutine> t_thread_curr_coroutine;
 static thread_local Coroutine::ptr t_thread_main_coroutine = {0};
 
 static ConfigItem<uint32_t>::ptr g_coroutine_stack_size = 
@@ -34,7 +34,7 @@ Coroutine::Coroutine()
     }
 
     ++s_coroutine_count;
-    LOG_DEBUG(g_logger) << "main coroutine created";
+    // LOG_DEBUG(g_logger) << "main coroutine created";
 
 }
 
@@ -60,7 +60,7 @@ Coroutine::Coroutine(std::function<void()> cb, size_t stack_size, bool use_calle
         0
     );
 
-    LOG_INFO(g_logger) << "create coroutine, id = " << m_id;
+    // LOG_INFO(g_logger) << "create coroutine, id = " << m_id;
 
 }
 
@@ -78,11 +78,11 @@ Coroutine::~Coroutine()
         LOG_ASSERT(!m_cb);
         LOG_ASSERT(m_state == EXEC);
 
-        if(t_thread_temp_coroutine.lock().get() == this)
-            t_thread_temp_coroutine.reset();
+        if(t_thread_curr_coroutine.lock().get() == this)
+            t_thread_curr_coroutine.reset();
     }
     
-    LOG_DEBUG(g_logger) << "Coroutine::~Coroutine(), id = " << m_id << ", total = " << s_coroutine_count;
+    // LOG_DEBUG(g_logger) << "Coroutine::~Coroutine(), id = " << m_id << ", total = " << s_coroutine_count;
 }
 
 void Coroutine::reset(std::function<void()> cb)
@@ -107,7 +107,7 @@ void Coroutine::reset(std::function<void()> cb)
 
 void Coroutine::swapIn()
 {
-    SaveTemp(shared_from_this());
+    SetThreadCurrCoroutine(shared_from_this());
     m_state = EXEC;
     if(swapcontext(&t_thread_main_coroutine->m_ctx, &m_ctx))
     {
@@ -118,7 +118,7 @@ void Coroutine::swapIn()
 
 void Coroutine::swapOut()
 {
-    SaveTemp(t_thread_main_coroutine);
+    SetThreadCurrCoroutine(t_thread_main_coroutine);
     if(swapcontext(&m_ctx, &t_thread_main_coroutine->m_ctx))
     {
         LOG_ERROR(g_logger) << "swapcontext failed: " << strerror(errno);
@@ -126,35 +126,40 @@ void Coroutine::swapOut()
     }
 }
 
-void Coroutine::SaveTemp(std::shared_ptr<Coroutine> t)
+void Coroutine::SetThreadCurrCoroutine(std::shared_ptr<Coroutine> t)
 {
-    t_thread_temp_coroutine = t;
+    t_thread_curr_coroutine = t;
 }
 
-Coroutine::ptr Coroutine::GetTemp()
+Coroutine::ptr Coroutine::GetThreadCurrCoroutine()
 {
-    if(t_thread_temp_coroutine.lock().get() == nullptr)
+    if(t_thread_curr_coroutine.lock().get() == nullptr)
         Init();
 
-    return t_thread_temp_coroutine.lock();
+    return t_thread_curr_coroutine.lock();
+}
+
+Coroutine::ptr Coroutine::GetThreadRootCoroutine()
+{
+    return t_thread_main_coroutine;
 }
 
 Coroutine::ptr Coroutine::Init()
 {
-    if(t_thread_temp_coroutine.lock().get() != nullptr)
+    if(t_thread_curr_coroutine.lock().get() != nullptr)
     {
         LOG_ASSERT_W(false, "main coroutine object for current has been created");
-        return t_thread_temp_coroutine.lock();
+        return t_thread_curr_coroutine.lock();
     }
 
     t_thread_main_coroutine = std::shared_ptr<Coroutine>(new Coroutine());
-    t_thread_temp_coroutine = t_thread_main_coroutine;
-    return t_thread_temp_coroutine.lock();
+    t_thread_curr_coroutine = t_thread_main_coroutine;
+    return t_thread_curr_coroutine.lock();
 }
 
 void Coroutine::Yield2Ready()
 {
-    Coroutine::ptr cur = GetTemp();
+    Coroutine::ptr cur = GetThreadCurrCoroutine();
     LOG_ASSERT(cur->m_state == EXEC);
     cur->m_state = READY;
     cur->swapOut();
@@ -162,7 +167,7 @@ void Coroutine::Yield2Ready()
 
 void Coroutine::Yield2Hold()
 {
-    Coroutine::ptr cur = GetTemp();
+    Coroutine::ptr cur = GetThreadCurrCoroutine();
     LOG_ASSERT(cur->m_state == EXEC);
     cur->m_state = HOLD;
     cur->swapOut();
@@ -175,7 +180,7 @@ uint64_t Coroutine::CoroutineCount()
 
 void Coroutine::MainFunc()
 {
-    Coroutine::ptr cur = GetTemp();
+    Coroutine::ptr cur = GetThreadCurrCoroutine();
     LOG_ASSERT(cur);
     
     try
@@ -212,7 +217,7 @@ void Coroutine::MainFunc()
 
 void Coroutine::CallerMainFunc()
 {
-    Coroutine::ptr cur = GetTemp();
+    Coroutine::ptr cur = GetThreadCurrCoroutine();
     LOG_ASSERT(cur);
 
     try
@@ -249,8 +254,8 @@ void Coroutine::CallerMainFunc()
 
 uint64_t Coroutine::CurrentCoroutineId()
 {
-    if(t_thread_temp_coroutine.lock() != nullptr) {
-        return t_thread_temp_coroutine.lock()->getId();
+    if(t_thread_curr_coroutine.lock() != nullptr) {
+        return t_thread_curr_coroutine.lock()->getId();
     }
     return 0;
 }

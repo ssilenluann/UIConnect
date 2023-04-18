@@ -63,14 +63,16 @@ public:
      * @brief seve target coroutine info into thread local memory
      * @param[in]  coroutine object pointor with context info
     */
-    static void SaveTemp(std::shared_ptr<Coroutine> t);
+    static void SetThreadCurrCoroutine(std::shared_ptr<Coroutine> t);
 
     /**
      * @brief get previous coroutine from thread local memory,
      *          if there isn't, then create a new Coroutine object from current context and save it into thread local memory
      * @return smart pointer of Coroutine object with saved context data
     */
-    static Coroutine::ptr GetTemp();
+    static Coroutine::ptr GetThreadCurrCoroutine();
+
+    static Coroutine::ptr GetThreadRootCoroutine();
 
     /**
      * @brief create a main Coroutine onject with current context and then save it into thread local memory

@@ -6,13 +6,42 @@
 #include <map>
 #include <memory>
 #include <thread>
+#include <functional>
 #include "../log/Logger.h"
 
 template<class T>
 class ThreadPool
 {
 public:
-    ThreadPool(int size = 4): m_size(size), m_isQuited(false), m_threads(size){}
+
+    ThreadPool(int size = 4) : m_size(size), m_isQuited(false), m_threads(size) 
+    {
+        for(int i = 0; i < m_size; i++)
+        {
+            m_threads[i].reset(new T());
+            m_idMap[m_threads[i]->id()] = m_threads[i];
+        }
+    }
+    
+    ThreadPool(std::vector<std::function<void()>> func, int size = 4) : ThreadPool(size)
+    {
+        if(func.size() < size)  return;
+
+        for(int i = 0; i < m_size; i++)
+        {
+            m_threads[i]->bind(func[i]);
+        }
+    }
+
+    ThreadPool(std::function<void()> func, int size = 4) : ThreadPool(size)
+    {
+
+        for(int i = 0; i < m_size; i++)
+        {
+            m_threads[i]->bind(func);
+        }
+    }
+
     virtual ~ThreadPool()
     {
         if(m_isQuited)
@@ -32,8 +61,6 @@ public:
 
         for(int i = 0; i < m_size; i++)
         {
-            m_threads[i].reset(new T());
-            m_idMap[m_threads[i]->id()] = m_threads[i];
             m_threads[i]->run();
         }
     }
@@ -48,6 +75,18 @@ public:
 
         m_isQuited = true;
         LOG_INFO(logger) << "thread poll quited";        
+    }
+
+    void detach()
+    {
+        for(auto& thread: m_threads)
+            thread->detach();
+    }
+
+    void join()
+    {
+        for(auto& thread: m_threads)
+            thread->join();        
     }
     
 public:
