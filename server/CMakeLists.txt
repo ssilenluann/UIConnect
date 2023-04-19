@@ -64,6 +64,9 @@ set(LIB_SRC
 	./library/config/ItemConverter.hpp
 	./library/config/ConfigItem.hpp
 	./library/config/Config.cpp
+	./library/hook/FDItem.cpp
+	./library/hook/FDManager.cpp
+	./library/hook/Hook.cpp
 )
 	
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
