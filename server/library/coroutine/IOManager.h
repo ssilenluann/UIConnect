@@ -36,7 +36,7 @@ public:
     TimerFunc::ptr addTimer(uint64_t cycle, std::function<void()> cb, bool oneshot = true);
     TimerFunc::ptr addConditionTimer(
         uint64_t cycle, std::function<void()> cb,
-        std::weak_ptr<void> weak_cond, bool oneshot = false
+        std::weak_ptr<void> weak_cond, bool oneshot = true
     );
     
 protected:

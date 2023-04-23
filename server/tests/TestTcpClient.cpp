@@ -69,7 +69,7 @@ void thread_func(int thread_no)
     std::list<std::shared_ptr<Buffer>>::iterator it_buffer = g_buffers[thread_no].begin();
     for(; it != g_sockets[thread_no].end();)
     {
-        int retp = (*it)->connect("127.0.0.1", 30040);
+        int retp = (*it)->connect("127.0.0.1", 5260);
         if(retp < 0)
         {
             LOG_FMT_INFO(g_logger, "connect error, fd = %d, errno = %d", (*it)->fd(), errno);

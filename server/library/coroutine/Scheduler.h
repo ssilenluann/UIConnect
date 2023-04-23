@@ -86,21 +86,6 @@ public:
         if(emptyBefore) notice();
     }
 
-private:
-
-    template<class Task>
-    bool scheduleNoLock(Task fc, int thread)
-    {
-        bool emptyBefore = m_coroutineTasks.empty();
-        CoroutineJobTarget ct(fc, thread);
-        if(ct.coroutine || ct.cb)
-        {
-            m_coroutineTasks.push_back(ct);
-        }
-
-        return emptyBefore;
-    }
-
 protected:
     bool m_isStopping = true;
     bool m_autoStop = false;

@@ -1,8 +1,19 @@
 #ifndef HOOK_HOOK_H
 #define HOOK_HOOK_H
 
+#pragma message("include hook.h")
+#include <unistd.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdarg.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <dlfcn.h>
+
 class Hook
 {
+public:
     // check if current enable hook
     static bool IsHookEnabled();
     // set current hook status
@@ -79,7 +90,8 @@ extern getsockopt_fun getsockopt_f;
 typedef int (*setsockopt_fun)(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 extern setsockopt_fun setsockopt_f;
 
-extern int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen, uint64_t timeout_ms);
-   
+int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen, uint64_t timeout_ms);
+
 }
+
 #endif

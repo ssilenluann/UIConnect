@@ -3,6 +3,8 @@
 
 #include "Mutex.h"
 #include "FDItem.h"
+#include "Singleton.h"
+
 #include <vector>
 class FDManager
 {
@@ -25,4 +27,6 @@ private:
     RWMutexType m_mutex;
     std::vector<FDItem::ptr> m_fds;
 };
+
+typedef Singleton<FDManager> FDMgr;
 #endif

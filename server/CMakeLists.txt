@@ -89,11 +89,12 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
-target_link_libraries(test_client PUBLIC libboost_program_options.a
-libyaml-cpp.so
-libboost_filesystem.a
-)
+# add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
+# target_link_libraries(test_client PUBLIC libboost_program_options.a
+# libyaml-cpp.so
+# libboost_filesystem.a
+# dl
+# )
 
 # add_executable(test_prog_opt ./tests/TestProgOpt.cpp ${LIB_SRC})
 # target_link_libraries(test_prog_opt PUBLIC libboost_program_options.a
@@ -142,7 +143,14 @@ libboost_filesystem.a
 # libboost_filesystem.a
 # )
 
-add_executable(test_io_manager ./tests/TestIoManager.cpp ${LIB_SRC})
-target_link_libraries(test_io_manager PUBLIC ${Boost_LIBRARIES}
+# add_executable(test_io_manager ./tests/TestIoManager.cpp ${LIB_SRC})
+# target_link_libraries(test_io_manager PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# dl
+# )
+
+add_executable(test_hook ./tests/TestHook.cpp ${LIB_SRC})
+target_link_libraries(test_hook PUBLIC ${Boost_LIBRARIES}
 libyaml-cpp.so
+dl
 )
