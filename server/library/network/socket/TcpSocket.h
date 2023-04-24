@@ -38,7 +38,7 @@ public:
 	std::shared_ptr<Packet> getPack();
 
 	inline SOCKET fd() const;
-	inline std::shared_ptr<Socket> sock();
+	inline std::shared_ptr<Sock> sock();
 
 	inline bool isValid();
 	
@@ -47,7 +47,7 @@ public:
 	std::string getLastError();
 
 private:
-	std::shared_ptr<Socket> m_sock;
+	std::shared_ptr<Sock> m_sock;
 	int m_errno;
 	bool m_isNonBlock;
 

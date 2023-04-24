@@ -5,7 +5,8 @@
 #include "../thread/Thread.h"
 #include "Scheduler.h"
 #include "Coroutine.h"
-#include "unistd.h"
+#include "../hook/Hook.h"
+#include <unistd.h>
 
 static Logger::ptr g_logger = LOG_NAME("system");
 
@@ -24,6 +25,8 @@ Scheduler::~Scheduler()
 
 void Scheduler::work()
 {
+    Hook::SetHookEnable(true);
+
     Coroutine::Init();
     
     // create idle coroutine

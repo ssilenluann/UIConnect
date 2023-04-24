@@ -53,6 +53,8 @@ void hook_init()
     static bool is_inited = false;
     if(is_inited)   return;
 
+    is_inited = true;
+
     HOOK_FUNC_INI(sleep);
     HOOK_FUNC_INI(usleep);
     HOOK_FUNC_INI(nanosleep);
@@ -74,8 +76,6 @@ void hook_init()
     HOOK_FUNC_INI(ioctl);
     HOOK_FUNC_INI(getsockopt);
     HOOK_FUNC_INI(setsockopt);
-
-    is_inited = true;
 }
 
 #undef HOOK_FUNC_INIT
@@ -98,6 +98,8 @@ struct _HookIniter
         );
     }
 };
+
+static _HookIniter s_hook_initer;
 
 struct timer_info 
 {

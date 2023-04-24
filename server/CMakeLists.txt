@@ -12,7 +12,14 @@ if(NOT Boost_FOUND)
 	message(FATAL_ERROR "Could not find required Boost libraries")
 endif()
 
+find_package(OpenSSL REQUIRED)
+if(NOT OpenSSL_FOUND)
+	message(FATAL_ERROR "Could not find required open-ssl libraries")
+endif()
+
+
 include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${OpenSSL_INCLUDE_DIR})
 include_directories(./external/)
 include_directories(./external/)
 
@@ -67,6 +74,9 @@ set(LIB_SRC
 	./library/hook/FDItem.cpp
 	./library/hook/FDManager.cpp
 	./library/hook/Hook.cpp
+	./library/socket/Socket.cpp
+	./library/socket/Address.cpp
+	./library/socket/ByteArray.cpp
 )
 	
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
@@ -153,4 +163,5 @@ add_executable(test_hook ./tests/TestHook.cpp ${LIB_SRC})
 target_link_libraries(test_hook PUBLIC ${Boost_LIBRARIES}
 libyaml-cpp.so
 dl
+ssl
 )

@@ -20,13 +20,15 @@ public:
     static std::string Filename(const std::string& filename);
     static void GetAllFileName(const std::string &directory, const std::string& exe, std::list<std::string>& fileList);
     static void GetAllFilePath(const std::string &directory, const std::string& exe, std::list<std::string>& fileList);
-
+    
     static int MkLimitedDir(const char* dirname);
     static int __lstat(const char* file, struct stat* st = nullptr);
 
     static std::string InitialPath();
     static std::string WorkPath();
     static void WorkPath(const std::string& path);
+
+    static bool Unlink(const std::string& filename, bool exist = false);
 };
 
 #endif

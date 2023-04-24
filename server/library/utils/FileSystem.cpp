@@ -104,4 +104,12 @@ void FileSystem::WorkPath(const std::string &str)
     boost::filesystem::current_path(str);
 }
 
+bool FileSystem::Unlink(const std::string &filename, bool exist)
+{
+    if(!exist && __lstat(filename.c_str())) {
+        return true;
+    }
+    return ::unlink(filename.c_str()) == 0;
+}
+
 #endif

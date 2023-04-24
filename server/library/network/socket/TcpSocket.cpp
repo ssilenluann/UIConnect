@@ -12,12 +12,12 @@
 static Logger::ptr g_logger = LOG_NAME("system");
 
 TcpSocket::TcpSocket(bool nonblock) 
-	:m_sock(new Socket(nonblock)), m_isNonBlock(nonblock)
+	:m_sock(new Sock(nonblock)), m_isNonBlock(nonblock)
 {
 	reuse();
 }
 TcpSocket::TcpSocket(SOCKET sock) 
-	:m_sock(new Socket(sock)) {}
+	:m_sock(new Sock(sock)) {}
 
 TcpSocket::TcpSocket(const TcpSocket& sock) 
 	: m_sock(sock.m_sock){}
@@ -230,7 +230,7 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 	return true;
 }
 
-std::shared_ptr<Socket> TcpSocket::sock() { return m_sock; }
+std::shared_ptr<Sock> TcpSocket::sock() { return m_sock; }
 
 bool TcpSocket::isValid() { return m_sock != nullptr && *m_sock > SOCKET(0); }
 

@@ -1,5 +1,6 @@
 #include "coroutine/IOManager.h"
 #include "log/Logger.h"
+#include "hook.h"
 #include "network/socket/TcpSocket.h"
 #include <errno.h>
 

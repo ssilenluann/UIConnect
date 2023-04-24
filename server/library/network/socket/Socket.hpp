@@ -21,11 +21,11 @@
 class SocketIniter;
 #endif 
 
-class Socket 
+class Sock 
 {
 public:
 	// RAII
-	Socket(bool nonblock = true): m_sock(INVALID_SOCKET)
+	Sock(bool nonblock = true): m_sock(INVALID_SOCKET)
 	{
 		// SOCK_CLOEXEC, close for exec, for example, if a child process opened by exec,
 		// this socket is unavailable for it
@@ -39,11 +39,11 @@ public:
 		}
 	}
 
-	Socket(SOCKET sock) : m_sock(sock) {}
+	Sock(SOCKET sock) : m_sock(sock) {}
 	
-	Socket(const Socket& sock) : m_sock(sock.m_sock) {}
+	Sock(const Sock& sock) : m_sock(sock.m_sock) {}
 
-	Socket& operator=(const Socket& rhs)
+	Sock& operator=(const Sock& rhs)
 	{
 		if (this != &rhs)
 		{
@@ -58,7 +58,7 @@ public:
 	}
 
 	// RAII
-	virtual ~Socket()
+	virtual ~Sock()
 	{
 		close();
 	}
@@ -103,6 +103,6 @@ public:
 		WSACleanup();
 	}
 };
-SocketIniter Socket::m_sockIniter;
+SocketIniter Sock::m_sockIniter;
 #endif
 #endif
