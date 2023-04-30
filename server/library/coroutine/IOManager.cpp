@@ -12,8 +12,8 @@
 
 static Logger::ptr g_logger = LOG_NAME("system");
 
-IOManager::IOManager(size_t threadCount, const std::string &name)
-    :Scheduler(threadCount, name)
+IOManager::IOManager(size_t threadCount, const std::string &name, bool callerThreadJoinWorker)
+    :Scheduler(threadCount, name, callerThreadJoinWorker)
 {
     m_epfd = epoll_create(5000);
     LOG_ASSERT(m_epfd > 0);
@@ -52,11 +52,11 @@ IOManager::~IOManager()
 bool IOManager::addEvent(int fd, EventType event, std::function<void()> cb)
 {
     {
-        RWMutexType::ReadLock lock(m_mutex);
+        RWMutexType::ReadLock lock(m_rwMutex);
         if((int)m_fdContexts.size() <= fd)
         {
             lock.unlock();
-            RWMutexType::WriteLock wlock(m_mutex);
+            RWMutexType::WriteLock wlock(m_rwMutex);
             contextResize(fd* 1.5);
         }
     }
@@ -112,7 +112,7 @@ bool IOManager::addEvent(int fd, EventType event, std::function<void()> cb)
 
 bool IOManager::delEvent(int fd, EventType event)
 {
-    RWMutexType::ReadLock lock(m_mutex);
+    RWMutexType::ReadLock lock(m_rwMutex);
     if((int)m_fdContexts.size() <= fd)
         return false;
     
@@ -147,7 +147,7 @@ bool IOManager::delEvent(int fd, EventType event)
 
 bool IOManager::triggerAndCancelEvent(int fd, EventType event)
 {
-    RWMutexType::ReadLock lock(m_mutex);
+    RWMutexType::ReadLock lock(m_rwMutex);
     if((int)m_fdContexts.size() <= fd)
         return false;
     
@@ -182,7 +182,7 @@ bool IOManager::triggerAndCancelEvent(int fd, EventType event)
 
 bool IOManager::triggerAndCancelEvent(int fd)
 {
-    RWMutexType::ReadLock lock(m_mutex);
+    RWMutexType::ReadLock lock(m_rwMutex);
     if((int)m_fdContexts.size() <= fd)
         return false;
     
@@ -227,7 +227,7 @@ std::shared_ptr<IOManager> IOManager::GetThis()
     return std::dynamic_pointer_cast<IOManager>(Scheduler::GetScheduler());
 }
 
-void IOManager::start(std::shared_ptr<IOManager> &manager)
+void IOManager::start(std::shared_ptr<IOManager> manager)
 {
     setScheduler(std::dynamic_pointer_cast<Scheduler>(manager));
     Scheduler::start();
@@ -251,10 +251,10 @@ void IOManager::notice()
     LOG_ASSERT(ret == 1);
 }
 
-bool IOManager::ReadyToStop()
+bool IOManager::WorkCoroutineReadyToStop()
 {
     uint64_t timeout = 0;
-    return ReadyToStop(timeout);
+    return WorkCoroutineReadyToStop(timeout);
 }
 
 void IOManager::idle()
@@ -271,7 +271,7 @@ void IOManager::idle()
     for(;;)
     {
         uint64_t next_timeout = 0;
-        if(ReadyToStop(next_timeout))
+        if(WorkCoroutineReadyToStop(next_timeout))
         {
             LOG_DEBUG(g_logger) << "name" << getName()
                 << " idle coroutine exit";
@@ -315,7 +315,7 @@ void IOManager::idle()
             }
 
             // process events
-            RWMutexType::ReadLock lock(m_mutex);
+            RWMutexType::ReadLock lock(m_rwMutex);
             if(m_fdContexts.size() <= event.data.fd)
             {
                 LOG_ERROR(g_logger) << "unknown fd event";
@@ -346,10 +346,10 @@ void IOManager::idle()
     }
 }
 
-bool IOManager::ReadyToStop(uint64_t &timeout)
+bool IOManager::WorkCoroutineReadyToStop(uint64_t &timeout)
 {
     timeout = m_timer->getNextTimer();
-    return timeout == 0 && m_pendingEventCount == 0 && Scheduler::ReadyToStop();
+    return timeout == 0 && m_pendingEventCount == 0 && Scheduler::WorkCoroutineReadyToStop();
 }
 
 void IOManager::contextResize(size_t size)

@@ -36,7 +36,8 @@ public:
     typedef Mutex MutexType;
 
 public:
-    Scheduler(size_t threads = 1, const std::string& name = "");
+
+    Scheduler(size_t threads = 1, const std::string& name = "", bool callerThreadJoinWorker = true);
     virtual ~Scheduler();
 
     void work();
@@ -45,10 +46,11 @@ public:
 
     void start();
     void stop();
-    virtual bool ReadyToStop();
+    virtual bool WorkCoroutineReadyToStop();
     std::ostream& dump(std::ostream& os);
     // new task comming, notice all threads
     virtual void notice();
+    void callThreadJoinWork();
  
     inline const std::string& getName() const {return m_name;}
     inline MutexType& mutex() { return m_mutex;}
@@ -88,15 +90,17 @@ public:
 
 protected:
     bool m_isStopping = true;
-    bool m_autoStop = false;
     MutexType m_mutex;
     std::string m_name;  
     size_t m_threadCount = 0;
+    bool m_callerThreadJoinWorker;
+    Coroutine::ptr m_callerCoroutine;
     std::atomic<size_t> m_activeThreadCount = {0};
     std::atomic<size_t> m_idleThreadCount = {0};
     std::shared_ptr<ThreadPool<Thread>> m_workThreadPool;
     std::vector<int64_t> m_threadIds;
     std::list<CoroutineJobTarget> m_coroutineTasks;    // coroutines ready to run
+    ConditionMutex m_cv;
 };
 
 #endif

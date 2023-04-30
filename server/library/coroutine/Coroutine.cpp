@@ -21,8 +21,6 @@ static thread_local Coroutine::ptr t_thread_main_coroutine = {0};
 static ConfigItem<uint32_t>::ptr g_coroutine_stack_size = 
     Config::SearchOrAdd<uint32_t>("coroutine.stack_size", 128*1024, "coroutine stack size");
 
-#endif
-
 Coroutine::Coroutine()
 {
     m_state = EXEC;
@@ -38,7 +36,7 @@ Coroutine::Coroutine()
 
 }
 
-Coroutine::Coroutine(std::function<void()> cb, size_t stack_size, bool use_caller) : m_id(++s_coroutine_id), m_cb(cb)
+Coroutine::Coroutine(std::function<void()> cb, size_t stack_size) : m_id(++s_coroutine_id), m_cb(cb)
 {
     ++s_coroutine_count;
     m_stackSize = stack_size > 0 ? stack_size : g_coroutine_stack_size->getValue();
@@ -56,7 +54,7 @@ Coroutine::Coroutine(std::function<void()> cb, size_t stack_size, bool use_calle
 
     makecontext(
         &m_ctx,
-        use_caller? &Coroutine::CallerMainFunc : &Coroutine::MainFunc,
+        &Coroutine::MainFunc,
         0
     );
 
@@ -208,47 +206,13 @@ void Coroutine::MainFunc()
             << ThreadUtil::Backtrace2String();
     }
 
-    auto raw_ptr = cur.get();
-    cur.reset();
-    raw_ptr->swapOut();
-    
-    LOG_ASSERT_W(false, "coroutine should have been swithed out before");
-}
-
-void Coroutine::CallerMainFunc()
-{
-    Coroutine::ptr cur = GetThreadCurrCoroutine();
-    LOG_ASSERT(cur);
-
-    try
-    {
-        cur->m_cb();
-        cur->m_cb = nullptr;
-        cur->m_state = TERM;
-    }
-    catch(const std::exception& e)
-    {
-        cur->m_state = EXCEPT;
-        LOG_ERROR(g_logger) << "Coroutine Except: " << e.what()
-            << ", fiber_id = " << cur->getId()
-            << std::endl
-            << ThreadUtil::Backtrace2String();
-    }
-    catch(...)
-    {
-        cur->m_state = EXCEPT;
-        LOG_ERROR(g_logger) << "Coroutine Except, "
-            << ", fiber_id = " << cur->getId()
-            << std::endl
-            << ThreadUtil::Backtrace2String();
-    }
-    
     // here, if we don't get the raw pointer and then reset the shared_ptr object 'cur',
     // before the 'cur' destoried, the context has been switched out,
     // so the use_count won't decrese, and lead to memory leak
     auto raw_ptr = cur.get();
     cur.reset();
     raw_ptr->swapOut();
+    
     LOG_ASSERT_W(false, "coroutine should have been swithed out before");
 }
 
@@ -259,3 +223,5 @@ uint64_t Coroutine::CurrentCoroutineId()
     }
     return 0;
 }
+
+#endif

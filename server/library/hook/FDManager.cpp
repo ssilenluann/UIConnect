@@ -19,8 +19,9 @@ FDItem::ptr FDManager::get(int fd, bool create)
         return m_fds[fd];
     lock.unlock();
 
-    RWMutexType::WriteLock wlock(m_mutex);
     FDItem::ptr fdi(new FDItem(fd));
+    
+    RWMutexType::WriteLock wlock(m_mutex);
     if(fd >= m_fds.size())
         m_fds.resize(fd * 1.5);
     m_fds[fd] = fdi;

@@ -2,6 +2,9 @@
 #define MUTEX_CPP
 
 #include "Mutex.h"
+
+uint64_t RWMutex::s_counter = 0;
+
 Semaphore::Semaphore(uint32_t count) 
 {
     if(sem_init(&m_semaphore, 0, count)) 

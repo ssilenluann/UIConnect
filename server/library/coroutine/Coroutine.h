@@ -34,7 +34,7 @@ public:
      * @param[in] stack size
      * @param[in] scheduled by main coroutine
     */
-    Coroutine(std::function<void()> cb, size_t stack_size = 0, bool use_caller = false);
+    Coroutine(std::function<void()> cb, size_t stack_size = 0);
 
     ~Coroutine();
 
@@ -92,9 +92,6 @@ public:
 
     // run the main function of coroutine, jump to main coroutine of thread after finish
     static void MainFunc();
-
-    // run the main function of caller, jump to thread scheduler coroutine after finish
-    static void CallerMainFunc();
 
     // running coroutine id
     static uint64_t CurrentCoroutineId();

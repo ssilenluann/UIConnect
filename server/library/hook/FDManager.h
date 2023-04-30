@@ -23,7 +23,7 @@ public:
     
     void del(int fd);
 
-private:
+protected:
     RWMutexType m_mutex;
     std::vector<FDItem::ptr> m_fds;
 };

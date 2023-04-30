@@ -12,7 +12,7 @@ public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef RWMutex RWMutexType;
 
-    IOManager(size_t threadCount = 1, const std::string& name = "");
+    IOManager(size_t threadCount = 1, const std::string& name = "", bool callerThreadJoinWorker = false);
     ~IOManager();
     
     enum EventType 
@@ -31,7 +31,7 @@ public:
     bool triggerAndCancelEvent(int fd);
     static std::shared_ptr<IOManager> GetThis();
     
-    void start(std::shared_ptr<IOManager>& manager);
+    void start(std::shared_ptr<IOManager> manager);
 
     TimerFunc::ptr addTimer(uint64_t cycle, std::function<void()> cb, bool oneshot = true);
     TimerFunc::ptr addConditionTimer(
@@ -41,17 +41,17 @@ public:
     
 protected:
     void notice() override;
-    bool ReadyToStop() override;
+    bool WorkCoroutineReadyToStop() override;
     void idle() override;
 
-    bool ReadyToStop(uint64_t& timeout);
+    bool WorkCoroutineReadyToStop(uint64_t& timeout);
     void contextResize(size_t size);
 
 private:
     int m_epfd = 0;
     int m_noticeFds[2];
     std::atomic<size_t> m_pendingEventCount = {0};
-    RWMutexType m_mutex;
+    RWMutexType m_rwMutex;
     std::shared_ptr<TimerManager> m_timer;
     std::vector<std::shared_ptr<FdContext>> m_fdContexts;
 };

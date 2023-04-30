@@ -12,15 +12,15 @@ static Logger::ptr g_logger = LOG_NAME("system");
 
 static std::weak_ptr<Scheduler> t_scheduler;
 
-Scheduler::Scheduler(size_t threads, const std::string &name)
-    : m_name(name), m_threadCount(threads)
+Scheduler::Scheduler(size_t threads, const std::string &name, bool callerThreadJoinWorker)
+    : m_name(name), m_threadCount(threads), m_callerThreadJoinWorker(callerThreadJoinWorker)
 {
-    LOG_ASSERT(threads > 0);
+    LOG_ASSERT(threads >= 0);
 }
 
 Scheduler::~Scheduler()
 {
-    LOG_ASSERT(m_isStopping);
+    LOG_ASSERT(m_idleThreadCount == 0);
 }
 
 void Scheduler::work()
@@ -106,7 +106,7 @@ void Scheduler::setScheduler()
 void Scheduler::idle()
 {
     LOG_INFO(g_logger) << "idle";
-    while(!ReadyToStop())
+    while(!WorkCoroutineReadyToStop())
         Coroutine::Yield2Hold();
 }
 
@@ -144,37 +144,31 @@ void Scheduler::start()
     setScheduler();
 
     MutexType::Lock lock(m_mutex);
-    if(!m_isStopping)
-    {
-        return;
-    }
-
+    if(!m_isStopping) return;
     m_isStopping = false;
 
     // create thread pool and specify each thread's entry function   
-    m_workThreadPool = std::make_shared<ThreadPool<Thread>>(std::bind(&Scheduler::work, this), m_threadCount);
+    m_workThreadPool = std::make_shared<ThreadPool<Thread>>(std::bind(&Scheduler::work, shared_from_this()), m_threadCount);
     m_workThreadPool->start();
     m_workThreadPool->detach();
+
 }
 
 void Scheduler::stop()
 {
     // LOG_INFO(g_logger) << "scheduler " << m_name << " start to quit";
-    m_autoStop = true;
-    if( m_threadCount == 0
-        && (Coroutine::GetThreadRootCoroutine()->getState() == Coroutine::TERM
-            || Coroutine::GetThreadRootCoroutine()->getState() == Coroutine::INIT)
-    )
-    {
-        LOG_INFO(g_logger) << this << "stopped";
-        m_isStopping = true;
 
-        if(ReadyToStop())  return;
-    }
+    if(m_isStopping)    return;
 
     m_isStopping = true;
     m_workThreadPool->quit();
 
+    // wait the caller coroutine quit
+    if(m_callerCoroutine)
+    {
+        m_cv.waitFor(m_mutex, [this]()-> bool { return m_callerCoroutine == nullptr;});
+    }
+        
     // LOG_INFO(g_logger) << "scheduler " << m_name << " quited";
 }
 
@@ -184,7 +178,7 @@ std::ostream &Scheduler::dump(std::ostream &os)
        << " size=" << m_threadCount
        << " active_count=" << m_activeThreadCount
        << " idle_count=" << m_idleThreadCount
-       << " ReadyToStop=" << m_isStopping
+       << " WorkCoroutineReadyToStop=" << m_isStopping
        << " ]" << std::endl << "    ";
     for(size_t i = 0; i < m_threadIds.size(); ++i) {
         if(i) {
@@ -200,15 +194,31 @@ void Scheduler::notice()
     LOG_INFO(g_logger) << "notice";
 }
 
+void Scheduler::callThreadJoinWork()
+{
+    if(!m_callerThreadJoinWorker || m_callerCoroutine)    return;
+    if(!m_callerCoroutine)
+    {
+        Coroutine::Init();
+        m_threadCount++;
+        m_callerCoroutine.reset(new Coroutine(std::bind(&Scheduler::work, shared_from_this())));
+        m_callerCoroutine->swapIn();
+        m_callerCoroutine.reset();
+        m_cv.notifyOne();
+        return;
+    }
+}
+
+
 std::shared_ptr<Scheduler> Scheduler::GetScheduler()
 {
     return t_scheduler.lock();
 }
 
-bool Scheduler::ReadyToStop()
+bool Scheduler::WorkCoroutineReadyToStop()
 {
     MutexType::Lock lock(m_mutex);
-    return m_autoStop && m_isStopping && m_coroutineTasks.empty();
+    return m_isStopping && m_coroutineTasks.empty();
 }
 
 

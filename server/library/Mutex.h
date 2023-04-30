@@ -73,29 +73,36 @@ private:
 
 // lock guard for read lock
 template<class T>
-struct ReadScopedLockImpl {
+struct ReadScopedLockImpl 
+{
 public:
 
     ReadScopedLockImpl(T& mutex)
-        :m_mutex(mutex) {
+        :m_mutex(mutex) 
+    {
         m_mutex.rdlock();
         m_locked = true;
     }
 
-    ~ReadScopedLockImpl() {
+    ~ReadScopedLockImpl() 
+    {
         unlock();
     }
 
-    void lock() {
-        if(!m_locked) {
+    void lock() 
+    {
+        if(!m_locked) 
+        {
             m_mutex.rdlock();
             m_locked = true;
         }
     }
 
 
-    void unlock() {
-        if(m_locked) {
+    void unlock() 
+    {
+        if(m_locked) 
+        {
             m_mutex.unlock();
             m_locked = false;
         }
@@ -109,28 +116,35 @@ private:
 
 // lock guard for write lock
 template<class T>
-struct WriteScopedLockImpl {
+struct WriteScopedLockImpl 
+{
 public:
 
     WriteScopedLockImpl(T& mutex)
-        :m_mutex(mutex) {
+        :m_mutex(mutex) 
+    {
         m_mutex.wrlock();
         m_locked = true;
     }
 
-    ~WriteScopedLockImpl() {
+    ~WriteScopedLockImpl() 
+    {
         unlock();
     }
 
-    void lock() {
-        if(!m_locked) {
+    void lock() 
+    {
+        if(!m_locked) 
+        {
             m_mutex.wrlock();
             m_locked = true;
         }
     }
 
-    void unlock() {
-        if(m_locked) {
+    void unlock() 
+    {
+        if(m_locked) 
+        {
             m_mutex.unlock();
             m_locked = false;
         }
@@ -142,34 +156,82 @@ private:
     bool m_locked;
 };
 
+class ConditionMutex;
 // linux mutex wrap class
-class Mutex : Noncopyable {
+class Mutex : Noncopyable 
+{
+    friend class ConditionMutex;
 public: 
     typedef ScopedLockImpl<Mutex> Lock;
 
-    Mutex() {
+    Mutex() 
+    {
         pthread_mutex_init(&m_mutex, nullptr);
     }
 
-    ~Mutex() {
+    ~Mutex() 
+    {
         pthread_mutex_destroy(&m_mutex);
     }
 
-    void lock() {
-        // std::cout << ThreadUtil::Backtrace2String();
+    void lock() 
+    {
         pthread_mutex_lock(&m_mutex);
     }
 
-    void unlock() {
+    void unlock() 
+    {
         pthread_mutex_unlock(&m_mutex);
     }
+
 private:
     /// mutex
     pthread_mutex_t m_mutex;
 };
 
+
+class ConditionMutex: Noncopyable
+{
+public:
+    ConditionMutex()
+    {
+        pthread_cond_init(&m_cond, nullptr);
+    }
+
+    ~ConditionMutex()
+    {
+        pthread_cond_destroy(&m_cond);
+    }
+
+    void waitFor(Mutex& mutex, std::function<bool()> pred)
+    {
+        mutex.lock();
+
+        while(!pred())
+        {
+            pthread_cond_wait(&m_cond, &mutex.m_mutex);
+        }
+
+        mutex.unlock();
+    }
+
+    void notifyOne()
+    {
+        pthread_cond_signal(&m_cond);
+    }
+
+    void notifyAll()
+    {
+        pthread_cond_broadcast(&m_cond);
+    }
+
+private:
+    pthread_cond_t m_cond;
+};
+
 // null mutex, designed for debug
-class NullMutex : Noncopyable{
+class NullMutex : Noncopyable
+{
 public:
     typedef ScopedLockImpl<NullMutex> Lock;
 
@@ -181,37 +243,86 @@ public:
 };
 
 // read/write mutex wrap class
-class RWMutex : Noncopyable{
+class RWMutex : Noncopyable
+{
 public:
 
     typedef ReadScopedLockImpl<RWMutex> ReadLock;
     typedef WriteScopedLockImpl<RWMutex> WriteLock;
 
-    RWMutex() {
+    RWMutex(): m_id(++s_counter)
+    {
         pthread_rwlock_init(&m_lock, nullptr);
     }
     
-    ~RWMutex() {
+    ~RWMutex() 
+    {
         pthread_rwlock_destroy(&m_lock);
     }
 
-    void rdlock() {
+    void rdlock() 
+    {
+        // if(m_lock.__data.__readers == 3)
+        // {
+        //     std::cout << ThreadUtil::GetThreadId() << ", cor id: " << ThreadUtil::GetCoroutineId() << " rdlock: " << m_id 
+        //         << ", holding read lock threads count = " << m_lock.__data.__readers << ", waitting writers no = " << m_lock.__data.__writers 
+        //         << ", current writer thread no = " << m_lock.__data.__cur_writer << std::endl;
+        //     std::cout << ThreadUtil::Backtrace2String(32, 2);
+        // }
+
+
         pthread_rwlock_rdlock(&m_lock);
+
+        // std::cout << ThreadUtil::GetThreadId() << ", cor id: " << ThreadUtil::GetCoroutineId() << " rdlock: " << m_id
+        //     << ", holding read lock threads count = " << m_lock.__data.__readers << ", waitting writers no = " << m_lock.__data.__writers 
+        //     << ", current writer thread no = " << m_lock.__data.__cur_writer << std::endl;
+        // std::cout << std::endl;    
     }
 
-    void wrlock() {
+    void wrlock() 
+    {
+        // std::cout << ThreadUtil::GetThreadId() << ", cor id: " << ThreadUtil::GetCoroutineId() << " wrlock: " << m_id
+        //     << ", holding read lock threads count = " << m_lock.__data.__readers << ", waitting writers no = " << m_lock.__data.__writers 
+        //     << ", current writer thread no = " << m_lock.__data.__cur_writer << std::endl;
+        // std::cout << ThreadUtil::Backtrace2String(32, 2);
+        
         pthread_rwlock_wrlock(&m_lock);
+        
+        // std::cout << ThreadUtil::GetThreadId() << ", cor id: " << ThreadUtil::GetCoroutineId() << " wrlock: " << m_id
+        //     << ", holding read lock threads count = " << m_lock.__data.__readers << ", waitting writers no = " << m_lock.__data.__writers 
+        //     << ", current writer thread no = " << m_lock.__data.__cur_writer << std::endl;
+        // std::cout << std::endl;    
     }
 
-    void unlock() {
+    void unlock() 
+    {
+        // if(m_lock.__data.__readers != 8 && m_lock.__data.__readers != 3)
+        // {
+        //     std::cout << ThreadUtil::GetThreadId() << ", cor id: " << ThreadUtil::GetCoroutineId() << " unlock: " << m_id
+        //         << ", holding read lock threads count = " << m_lock.__data.__readers << ", waitting writers no = " << m_lock.__data.__writers 
+        //         << ", current writer thread no = " << m_lock.__data.__cur_writer << std::endl;
+        //     std::cout << ThreadUtil::Backtrace2String(32, 2);
+        // }
+
+
         pthread_rwlock_unlock(&m_lock);
+
+        // std::cout << ThreadUtil::GetThreadId() << ", cor id: " << ThreadUtil::GetCoroutineId() << " unlock: " << m_id
+        //     << ", holding read lock threads count = " << m_lock.__data.__readers << ", waitting writers no = " << m_lock.__data.__writers 
+        //     << ", current writer thread no = " << m_lock.__data.__cur_writer << std::endl;
+        // std::cout << std::endl;      
     }
+
 private:
     pthread_rwlock_t m_lock;
+    uint64_t m_id;
+
+    static uint64_t s_counter;
 };
 
 // null RWMutex wrap class
-class NullRWMutex : Noncopyable {
+class NullRWMutex : Noncopyable 
+{
 public:
     typedef ReadScopedLockImpl<NullMutex> ReadLock;
     typedef WriteScopedLockImpl<NullMutex> WriteLock;
@@ -225,22 +336,27 @@ public:
 };
 
 // linux spinlock wrap class
-class Spinlock : Noncopyable {
+class Spinlock : Noncopyable 
+{
 public:
     typedef ScopedLockImpl<Spinlock> Lock;
 
-    Spinlock() {
+    Spinlock() 
+    {
         pthread_spin_init(&m_mutex, 0);
     }
-    ~Spinlock() {
+    ~Spinlock() 
+    {
         pthread_spin_destroy(&m_mutex);
     }
 
-    void lock() {
+    void lock() 
+    {
         pthread_spin_lock(&m_mutex);
     }
 
-    void unlock() {
+    void unlock() 
+    {
         pthread_spin_unlock(&m_mutex);
     }
 private:
@@ -249,22 +365,27 @@ private:
 };
 
 // CAS Mutex
-class CASLock : Noncopyable {
+class CASLock : Noncopyable 
+{
 public:
     typedef ScopedLockImpl<CASLock> Lock;
 
-    CASLock() {
+    CASLock() 
+    {
         m_mutex.clear();
     }
 
-    ~CASLock() {
+    ~CASLock() 
+    {
     }
 
-    void lock() {
+    void lock() 
+    {
         while(std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire));
     }
 
-    void unlock() {
+    void unlock() 
+    {
         std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release);
     }
 private:
