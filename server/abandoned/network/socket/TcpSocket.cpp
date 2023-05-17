@@ -16,6 +16,7 @@ TcpSocket::TcpSocket(bool nonblock)
 {
 	reuse();
 }
+
 TcpSocket::TcpSocket(SOCKET sock) 
 	:m_sock(new Sock(sock)) {}
 

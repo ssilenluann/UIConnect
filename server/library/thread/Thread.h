@@ -26,7 +26,7 @@ public:
     inline std::string name() { return m_name;}
 
     void bind(std::function<void()> func);
-    void entry();
+    virtual void entry();
 
     static const std::string& GetName();
     static void SetName(const std::string& name);

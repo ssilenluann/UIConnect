@@ -38,8 +38,8 @@ private:
     uint64_t m_readTimeout;
     bool m_isStop;
     std::vector<Socket::ptr> m_socks;
-    IOManager::ptr m_worker;
-    IOManager::ptr m_acceptWorker;
+    EpollScheduler::ptr m_worker;
+    EpollScheduler::ptr m_acceptWorker;
 };
 
 #endif

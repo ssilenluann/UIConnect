@@ -66,8 +66,8 @@ bool TcpServer::start()
     if(!m_isStop)   return true;
     m_isStop = false;
 
-    m_worker.reset(new IOManager(4));
-    m_acceptWorker.reset(new IOManager(4));
+    m_worker.reset(new EpollScheduler(4));
+    m_acceptWorker.reset(new EpollScheduler(4));
     m_worker->start(m_worker);
     m_acceptWorker->start(m_acceptWorker);
 

@@ -38,13 +38,13 @@ include_directories(./external/yaml-cpp)
 include_directories(./external/mongrel2)
 set(LIB_SRC 
 	./library/Mutex.cpp
+	./library/ByteArray.cpp
 	./library/ProgramOpt.cpp
 	./library/TimerFunc.cpp
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/coroutine/Coroutine.cpp
 	./library/coroutine/Scheduler.cpp
-	./library/coroutine/IOManager.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -58,13 +58,15 @@ set(LIB_SRC
 	# ./library/network/TcpServer.cpp
 	# ./library/network/TcpSession.cpp
 	# ./library/network/epoll/Epoll.cpp
+	# ./library/network/epoll/EpollChannel.cpp
+	# ./library/network/epoll/EpollScheduler.cpp
 	# ./library/network/event/EventLoop.cpp
 	# ./library/network/event/EventThread.cpp
 	# ./library/network/event/EventThreadPool.cpp
-	# ./library/network/socket/Buffer.cpp
-	# ./library/network/socket/Packet.cpp
-	# ./library/network/socket/SockAddr.hpp
-	# ./library/network/socket/Socket.hpp
+	./library/network/socket/Buffer.cpp
+	./library/network/socket/Packet.cpp
+	./library/network/socket/Address.cpp
+	./library/network/socket/Socket.cpp
 	# ./library/network/socket/TcpSocket.cpp
 	./library/utils/FileSystem.cpp
 	./library/utils/ThreadUtil.cpp
@@ -75,16 +77,17 @@ set(LIB_SRC
 	./library/config/Config.cpp
 	./library/hook/FDItem.cpp
 	./library/hook/FDManager.cpp
-	./library/hook/Hook.cpp
-	./library/socket/Socket.cpp
-	./library/socket/Address.cpp
-	./library/socket/ByteArray.cpp
-	./library/socket/TcpServer.cpp
-	./library/protocol/http/Http.cpp
-	./library/protocol/http/HttpRequest.cpp
-	./library/protocol/http/HttpResponse.cpp
-	./library/protocol/http/HttpRequestParser.cpp
-	./library/protocol/http/HttpResponseParser.cpp
+	# ./library/hook/Hook.cpp
+	# ./library/socket/TcpServer.cpp
+	# ./library/protocol/http/Http.cpp
+	# ./library/protocol/http/HttpRequest.cpp
+	# ./library/protocol/http/HttpResponse.cpp
+	# ./library/protocol/http/HttpRequestParser.cpp
+	# ./library/protocol/http/HttpResponseParser.cpp
+	# ./library/protocol/http/HttpConnection.cpp
+	# ./library/protocol/http/HttpSession.cpp
+	# ./library/stream/Stream.cpp
+	# ./library/stream/SocketStream.cpp
 )
 
 ragelmaker(./external/mongrel2/http11/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/external/mongrel2/http11/)
@@ -146,10 +149,12 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-# add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
-# target_link_libraries(test_scheduler PUBLIC ${Boost_LIBRARIES}
-# libyaml-cpp.so
-# )
+add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
+target_link_libraries(test_scheduler PUBLIC ${Boost_LIBRARIES}
+libyaml-cpp.so
+dl
+OpenSSL::SSL OpenSSL::Crypto
+)
 
 # add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
 # add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
@@ -195,9 +200,9 @@ link_directories(./lib)
 # OpenSSL::SSL OpenSSL::Crypto
 # )
 
-add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
-target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
-libyaml-cpp.so
-dl
-OpenSSL::SSL OpenSSL::Crypto
-)
+# add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
+# target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# dl
+# OpenSSL::SSL OpenSSL::Crypto
+# )

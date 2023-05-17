@@ -4,10 +4,10 @@
 #include "Hook.h"
 #include "log/Logger.h"
 #include "config/Config.h"
-#include "coroutine/IOManager.h"
 #include "FDItem.h"
 #include "FDManager.h"
 #include "TimerFunc.h"
+#include "../network/epoll/EpollScheduler.h"
 
 static thread_local bool t_hook_enabled = false;
 static Logger::ptr g_logger = LOG_NAME("system");
@@ -147,7 +147,7 @@ static ssize_t do_io(int fd, OriginFun fun, const char* hookFunc, uint32_t event
         }
 
         // errno == EAGAIN, readd event to epoll instance
-        auto ioManager = IOManager::GetThis();
+        auto ioManager = EpollScheduler::GetThis();
         TimerFunc::ptr timer;
         std::weak_ptr<timer_info> winfo(tinfo);
 
@@ -160,19 +160,12 @@ static ssize_t do_io(int fd, OriginFun fun, const char* hookFunc, uint32_t event
                 if(!t || t->cancelled)  return;
 
                 t->cancelled = ETIMEDOUT;
-                ioManager->triggerAndCancelEvent(fd, (IOManager::EventType)event);
+                // TODO:
+                // ioManager->triggerAndCancelEvent(fd, (EpollScheduler::EventType)event);
             }, winfo);
         }
 
-        // readd event into epoll instance
-        ret = ioManager->addEvent(fd, (IOManager::EventType)event);
-        if(ret < 0)
-        {
-            LOG_ERROR(g_logger) << hookFunc << " addEvent(" << fd << ", " << event << ")";
-            if(timer)   timer->cancel();
-            return -1;
-        }
-
+        //TODO:
         Coroutine::Yield2Hold();
         if(timer) timer->cancel();
         if(tinfo->cancelled)
@@ -193,9 +186,9 @@ unsigned int sleep(unsigned int seconds)
     if(!Hook::IsHookEnabled())  return sleep_f(seconds);
 
     Coroutine::ptr coroutine = Coroutine::GetThreadCurrCoroutine();
-    IOManager::ptr ioManager = IOManager::GetThis();
+    EpollScheduler::ptr ioManager = EpollScheduler::GetThis();
     ioManager->addTimer(seconds * 1000, 
-        std::bind((void(Scheduler::*)(Coroutine::ptr, int thread))&IOManager::schedule, ioManager, coroutine, -1));
+        std::bind((void(Scheduler::*)(Coroutine::ptr, int thread))&EpollScheduler::schedule, ioManager, coroutine, -1));
     
     Coroutine::Yield2Hold();
     return 0;
@@ -207,8 +200,8 @@ int nanosleep(const struct timespec* req, struct timespec* rem)
 
     int timeout_ms = req->tv_sec * 1000 + req->tv_nsec / 1000 / 1000;
     Coroutine::ptr coroutine = Coroutine::GetThreadCurrCoroutine();
-    IOManager::ptr ioManager = IOManager::GetThis();
-    ioManager->addTimer(timeout_ms, std::bind((void(Scheduler::*)(Coroutine::ptr, int thread))&IOManager::schedule, ioManager, coroutine, -1));
+    EpollScheduler::ptr ioManager = EpollScheduler::GetThis();
+    ioManager->addTimer(timeout_ms, std::bind((void(Scheduler::*)(Coroutine::ptr, int thread))&EpollScheduler::schedule, ioManager, coroutine, -1));
     Coroutine::Yield2Hold();
 }
 
@@ -244,7 +237,7 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
     if(ret == 0 || (ret < 0 && errno != EINPROGRESS))
         return ret;
     
-    IOManager::ptr ioManager = IOManager::GetThis();
+    EpollScheduler::ptr ioManager = EpollScheduler::GetThis();
     TimerFunc::ptr timer;
     std::shared_ptr<timer_info> tinfo(new timer_info);
     std::weak_ptr<timer_info> winfo(tinfo);
@@ -258,12 +251,12 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
                 if(!t || t->cancelled)  return;
 
                 t->cancelled = ETIMEDOUT;
-                ioManager->triggerAndCancelEvent(fd, IOManager::EventType::WRITE);
+                ioManager->triggerAndCancelEvent(fd, EpollScheduler::EventType::WRITE);
             }, winfo
         );
     }
 
-    ret = ioManager->addEvent(fd, IOManager::WRITE);
+    ret = ioManager->addEvent(fd, EpollScheduler::WRITE);
     if(ret == 0)
     {
         Coroutine::Yield2Hold();
@@ -296,7 +289,7 @@ int connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen)
 }
 
 int accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
-    int fd = do_io(s, accept_f, "accept", IOManager::EventType::READ, SO_RCVTIMEO, addr, addrlen);
+    int fd = do_io(s, accept_f, "accept", EpollScheduler::EventType::READ, SO_RCVTIMEO, addr, addrlen);
     if(fd >= 0) {
         FDMgr::GetInstance()->get(fd, true);
     }
@@ -304,43 +297,43 @@ int accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
 }
 
 ssize_t read(int fd, void *buf, size_t count) {
-    return do_io(fd, read_f, "read", IOManager::READ, SO_RCVTIMEO, buf, count);
+    return do_io(fd, read_f, "read", EpollScheduler::READ, SO_RCVTIMEO, buf, count);
 }
 
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
-    return do_io(fd, readv_f, "readv", IOManager::READ, SO_RCVTIMEO, iov, iovcnt);
+    return do_io(fd, readv_f, "readv", EpollScheduler::READ, SO_RCVTIMEO, iov, iovcnt);
 }
 
 ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
-    return do_io(sockfd, recv_f, "recv", IOManager::READ, SO_RCVTIMEO, buf, len, flags);
+    return do_io(sockfd, recv_f, "recv", EpollScheduler::READ, SO_RCVTIMEO, buf, len, flags);
 }
 
 ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen) {
-    return do_io(sockfd, recvfrom_f, "recvfrom", IOManager::READ, SO_RCVTIMEO, buf, len, flags, src_addr, addrlen);
+    return do_io(sockfd, recvfrom_f, "recvfrom", EpollScheduler::READ, SO_RCVTIMEO, buf, len, flags, src_addr, addrlen);
 }
 
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
-    return do_io(sockfd, recvmsg_f, "recvmsg", IOManager::READ, SO_RCVTIMEO, msg, flags);
+    return do_io(sockfd, recvmsg_f, "recvmsg", EpollScheduler::READ, SO_RCVTIMEO, msg, flags);
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
-    return do_io(fd, write_f, "write", IOManager::WRITE, SO_SNDTIMEO, buf, count);
+    return do_io(fd, write_f, "write", EpollScheduler::WRITE, SO_SNDTIMEO, buf, count);
 }
 
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
-    return do_io(fd, writev_f, "writev", IOManager::WRITE, SO_SNDTIMEO, iov, iovcnt);
+    return do_io(fd, writev_f, "writev", EpollScheduler::WRITE, SO_SNDTIMEO, iov, iovcnt);
 }
 
 ssize_t send(int s, const void *msg, size_t len, int flags) {
-    return do_io(s, send_f, "send", IOManager::WRITE, SO_SNDTIMEO, msg, len, flags);
+    return do_io(s, send_f, "send", EpollScheduler::WRITE, SO_SNDTIMEO, msg, len, flags);
 }
 
 ssize_t sendto(int s, const void *msg, size_t len, int flags, const struct sockaddr *to, socklen_t tolen) {
-    return do_io(s, sendto_f, "sendto", IOManager::WRITE, SO_SNDTIMEO, msg, len, flags, to, tolen);
+    return do_io(s, sendto_f, "sendto", EpollScheduler::WRITE, SO_SNDTIMEO, msg, len, flags, to, tolen);
 }
 
 ssize_t sendmsg(int s, const struct msghdr *msg, int flags) {
-    return do_io(s, sendmsg_f, "sendmsg", IOManager::WRITE, SO_SNDTIMEO, msg, flags);
+    return do_io(s, sendmsg_f, "sendmsg", EpollScheduler::WRITE, SO_SNDTIMEO, msg, flags);
 }
 
 int close(int fd)
@@ -350,7 +343,7 @@ int close(int fd)
     FDItem::ptr fdi = FDMgr::GetInstance()->get(fd);
     if(fdi)
     {
-        auto ioManager = IOManager::GetThis();
+        auto ioManager = EpollScheduler::GetThis();
         if(ioManager)
             ioManager->triggerAndCancelEvent(fd);
         

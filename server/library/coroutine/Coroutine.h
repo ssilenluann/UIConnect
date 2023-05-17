@@ -6,6 +6,7 @@
 #include <memory>
 #include <stdlib.h>
 
+template<class T>
 class Scheduler;
 
 class Coroutine: public std::enable_shared_from_this<Coroutine>

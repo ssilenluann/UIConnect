@@ -156,5 +156,15 @@ size_t HttpRequestParser::execute(char *data, size_t len)
     return offset;
 }
 
+uint64_t HttpRequestParser::GetHttpRequestBufferSize()
+{
+    return s_http_request_buffer_size;
+}
+
+uint64_t HttpRequestParser::GetHttpRequestMaxBodySize()
+{
+    return s_http_request_max_body_size;
+}
+
 
 #endif

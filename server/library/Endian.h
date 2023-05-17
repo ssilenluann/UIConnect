@@ -1,5 +1,5 @@
-#ifndef SOCKET_ENDIAN_H
-#define SOCKET_ENDIAN_H
+#ifndef ENDIAN_H
+#define ENDIAN_H
 
 #define LITTLE_ENDIAN 1
 #define BIG_ENDIAN 2

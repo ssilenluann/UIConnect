@@ -22,16 +22,7 @@ public:
             m_idMap[m_threads[i]->id()] = m_threads[i];
         }
     }
-    
-    ThreadPool(std::vector<std::function<void()>> func, int size = 4) : ThreadPool(size)
-    {
-        if(func.size() < size)  return;
 
-        for(int i = 0; i < m_size; i++)
-        {
-            m_threads[i]->bind(func[i]);
-        }
-    }
 
     ThreadPool(std::function<void()> func, int size = 4) : ThreadPool(size)
     {
@@ -88,8 +79,25 @@ public:
         for(auto& thread: m_threads)
             thread->join();        
     }
+
+    std::shared_ptr<T> getNextThread() 
+    {
+        if(m_threads.empty())   return nullptr;
+
+        static int no = 0;
+        if(no >= m_threads.size())  
+            no = 0;
+        
+        return m_threads[no];
+    }
+
+    std::shared_ptr<T> getThread(int no) 
+    {
+        if(no >= m_threads.size())   return nullptr;
+        return m_threads[no];
+    }
     
-public:
+protected:
 	int m_size;
     std::atomic_bool m_isQuited;
 	std::vector<std::shared_ptr<T>> m_threads;

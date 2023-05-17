@@ -8,17 +8,20 @@
 #include "Address.h"
 #include "../Noncopiable.h"
 
-class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
+class Socket : public std::enable_shared_from_this<Socket> 
+{
 public:
     typedef std::shared_ptr<Socket> ptr;
     typedef std::weak_ptr<Socket> weak_ptr;
 
-    enum Type {
+    enum Type 
+    {
         TCP = SOCK_STREAM,
         UDP = SOCK_DGRAM
     };
 
-    enum Family {
+    enum Family 
+    {
         /// IPv4 socket
         IPv4 = AF_INET,
         /// IPv6 socket
@@ -58,7 +61,8 @@ public:
     bool getOption(int level, int option, void* result, socklen_t* len);
 
     template<class T>
-    bool getOption(int level, int option, T& result) {
+    bool getOption(int level, int option, T& result) 
+    {
         socklen_t length = sizeof(T);
         return getOption(level, option, &result, &length);
     }
@@ -66,7 +70,8 @@ public:
     bool setOption(int level, int option, const void* result, socklen_t len);
 
     template<class T>
-    bool setOption(int level, int option, const T& value) {
+    bool setOption(int level, int option, const T& value) 
+    {
         return setOption(level, option, &value, sizeof(T));
     }
 
@@ -130,18 +135,11 @@ public:
 
     virtual std::string toString() const;
 
-    int getSocket() const { return m_sock;}
+    inline int getSocket() const { return m_sock;}
 
-    bool cancelRead();
-
-    bool cancelWrite();
-
-    bool cancelAccept();
-
-    bool cancelAll();
 protected:
 
-    void initSock();
+    virtual void initSock();
 
     void newSock();
 
@@ -156,7 +154,8 @@ protected:
     Address::ptr m_remoteAddress;
 };
 
-class SSLSocket : public Socket {
+class SSLSocket : public Socket 
+{
 public:
     typedef std::shared_ptr<SSLSocket> ptr;
 
