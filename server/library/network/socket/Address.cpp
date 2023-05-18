@@ -71,6 +71,8 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
     std::string node;
     const char* service = NULL;
 
+    LOG_DEBUG(g_logger) << "lock up " << host;
+
     //检查 ipv6address serivce
     if(!host.empty() && host[0] == '[') {
         const char* endipv6 = (const char*)memchr(host.c_str() + 1, ']', host.size() - 1);
@@ -100,6 +102,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
     int error = getaddrinfo(node.c_str(), service, &hints, &results);
     if(error) {
         LOG_DEBUG(g_logger) << "Address::Lookup getaddress(" << host << ", "
+            << "node : " << node << ", service: " << service << ", "
             << family << ", " << type << ") err=" << error << " errstr="
             << gai_strerror(error);
         return false;

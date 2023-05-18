@@ -2,15 +2,15 @@
 #define NETWORK_TCPSESSION_CPP
 
 #include "TcpSession.h"
-#include "./event/EventLoop.h"
+#include "./epoll/EpollWorker.h"
 #include "../log/Logger.h"
 
 #include <iostream>
 
 static Logger::ptr g_logger = LOG_NAME("system");
 
-TcpSession::TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop)
-: m_sessionId(sessionId), m_loop(loop)
+TcpSession::TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EpollWorker>& worker)
+: m_sessionId(sessionId), m_epollWorker(worker)
 {
     m_connection.reset(connection.release());
 }
@@ -62,9 +62,9 @@ bool TcpSession::removeConnection(int socket)
 // make sure the connection is deconstruction in controll thread
 bool TcpSession::removeConnectionInLoop(int socket)
 {
-    if(m_loop.expired())
+    if(m_epollWorker.expired())
     {
-        LOG_INFO(g_logger) << "session is still alive but event loop got killed";
+        LOG_INFO(g_logger) << "session is still alive but event worker got killed";
         return false;
     }
     //TODO:

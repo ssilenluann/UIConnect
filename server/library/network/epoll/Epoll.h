@@ -14,6 +14,7 @@
 
 class Epoll: Noncopyable
 {
+public:
     typedef std::shared_ptr<Epoll> ptr;
     typedef std::vector<epoll_event> EVENT_VEC;
     typedef std::map<int, EpollChannel::ptr> CHANNEL_MAP;

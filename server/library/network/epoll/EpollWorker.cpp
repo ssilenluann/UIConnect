@@ -2,22 +2,32 @@
 #define NETWORK_EPOLL_EPOLLWORKER_CPP
 
 #include "EpollWorker.h"
+#include "../TcpSession.h"
+#include "../../log/Logger.h"
+#include <memory> 
+
+static Logger::ptr g_logger = LOG_NAME("system");
+
+EpollWorker::EpollWorker(const std::string & name)
+    :m_pendingEventCount(0), m_epoller(new Epoll()), m_timer(new TimerManager()),
+    SchedulerWorker(name) 
+{
+    LOG_ASSERT(m_epoller->fd() > 0);
+}
+
+void EpollWorker::setScheduler(std::shared_ptr<Scheduler<EpollWorker>> sc)
+{
+    m_scheduler = sc;
+}
 
 void EpollWorker::work()
 {
     LOG_DEBUG(g_logger) << "idle";
     const uint64_t MAX_EVENT_COUNT = 256;
 
-    for(;;)
+    while(!readyToQuit())
     {
         uint64_t next_timeout = 0;
-        if(WorkCoroutineReadyToStop(next_timeout))
-        {
-            LOG_DEBUG(g_logger) << "name" << getName()
-                << " idle coroutine exit";
-            break;
-        }
-
         int cntAct = 0;
         do
         {
@@ -39,16 +49,10 @@ void EpollWorker::work()
 
         for(int i = 0; i < cntAct; ++i)
         {
-            if(m_activeChannels[i]->fd() == m_noticeFds[0])     // notice from schduler
-            {
-                char dummy[256] = {0};
-                while(read(m_noticeFds[0], dummy, sizeof(dummy)) > 0);
-                continue;
-            }
 
             // process events
             RWMutexType::ReadLock lock(m_rwMutex);
-            if(m_channels.size() <= m_activeChannels[i]->fd())
+            if(m_sessions.find(m_activeChannels[i]->fd()) == m_sessions.end())
             {
                 LOG_ERROR(g_logger) << "unknown fd event";
                 continue;
@@ -63,7 +67,8 @@ void EpollWorker::work()
         m_timer->listExpiredCb(cbs);
         // LOG_INFO(g_logger) << "expired timer count = " << cbs.size();
         for(auto& cb: cbs)
-            schedule(cb);
+            m_scheduler.lock()->schedule(cb);
+
         cbs.clear();
 
         // timer func and epoll event processe finish, swapout
@@ -75,9 +80,42 @@ void EpollWorker::work()
     }
 }
 
-bool EpollWorker::readyToQuit()
+void EpollWorker::bind(std::function<void(std::shared_ptr<EpollWorker>)> funcWithThread)
 {
-    return m_isQuited && m_pendingEventCount == 0;
+    m_schedulerFunc = funcWithThread;
+}
+
+TimerFunc::ptr EpollWorker::addTimer(uint64_t cycle, std::function<void()> cb, bool oneshot)
+{
+    return m_timer->addTimer(cycle, cb, oneshot);
+}
+
+TimerFunc::ptr EpollWorker::addConditionTimer(uint64_t cycle, std::function<void()> cb, std::weak_ptr<void> weak_cond, bool oneshot)
+{
+    return m_timer->addConditionTimer(cycle, cb, weak_cond, oneshot);
+}
+
+bool EpollWorker::updateChannel(int action, int fd, std::shared_ptr<EpollChannel> channel, int event)
+{
+    return m_epoller->updateChannel(action, fd, channel, event);
+}
+
+void EpollWorker::addSession(std::shared_ptr<TcpSession> session)
+{
+    RWMutexType::WriteLock lock(m_rwMutex);
+    m_sessions[session->id()] = session;
+}
+
+void EpollWorker::removeSession(unsigned long sessionId)
+{
+    RWMutexType::WriteLock lock(m_rwMutex);
+    auto it = m_sessions.find(sessionId);
+    if(it == m_sessions.end())
+    {
+        LOG_INFO(g_logger) << "unknown session";
+        return ;
+    }
+    m_sessions.erase(it);
 }
 
 #endif

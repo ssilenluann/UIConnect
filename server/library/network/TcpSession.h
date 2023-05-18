@@ -3,14 +3,14 @@
 
 #include "TcpConnection.h"
 #include "Callback.h"
+#include "./epoll/EpollWorker.h"
 
-class EventLoop;
 class TcpSession
 {
 public:
     typedef std::shared_ptr<TcpSession> ptr;
 
-    TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop);
+    TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EpollWorker>& worker);
     ~TcpSession();
 
     TcpSession(const TcpSession& session) = delete;
@@ -25,7 +25,7 @@ public:
     
 private:
     unsigned long m_sessionId;
-    std::weak_ptr<EventLoop> m_loop;
+    std::weak_ptr<EpollWorker> m_epollWorker;
     std::unique_ptr<TcpConnection> m_connection;
     EVENT_CALLBACK m_closeCallback;
 };

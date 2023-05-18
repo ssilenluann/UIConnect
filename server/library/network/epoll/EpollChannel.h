@@ -6,14 +6,15 @@
 #include <string>
 #include <functional>
 
-class EpollScheduler;
+class EpollWorker;
+
 class EpollChannel: private std::enable_shared_from_this<EpollChannel>
 {
 public:
     typedef std::shared_ptr<EpollChannel> ptr;
     typedef std::function<void()> EventCallback;
 
-    EpollChannel(std::weak_ptr<EpollScheduler> scheduler, int fd);
+    EpollChannel(std::weak_ptr<EpollWorker> worker, int fd);
     virtual ~EpollChannel(){}
 
     void setReadCallback(EventCallback cb) { m_onRead = cb;}
@@ -25,7 +26,7 @@ public:
     inline bool isNoneEvent() { return (m_activeEvent | noneEvent) > 0;}
     inline int targetEvent() { return m_targetEvent;}
     inline void setActiveEvent(int activeEvent) { m_activeEvent = activeEvent;}
-    inline std::weak_ptr<EpollScheduler> scheduler() { return m_ownerScheduler;}
+    inline std::weak_ptr<EpollWorker> scheduler() { return m_worker;}
 
     virtual bool handleEvent();
 
@@ -50,6 +51,6 @@ protected:
     EventCallback m_onWrite;
     EventCallback m_onClose;
     EventCallback m_onError;
-    std::weak_ptr<EpollScheduler> m_ownerScheduler;
+    std::weak_ptr<EpollWorker> m_worker;
 };
 #endif

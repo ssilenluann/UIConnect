@@ -44,7 +44,7 @@ set(LIB_SRC
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
 	./library/coroutine/Coroutine.cpp
-	./library/coroutine/Scheduler.cpp
+	./library/coroutine/SchedulerWorker.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -53,21 +53,17 @@ set(LIB_SRC
 	./library/log/LogOutputter.cpp
 	./library/log/outputter/LogFileOutputter.cpp
 	./library/log/outputter/LogStdoutOutputter.cpp
-	# ./library/network/TcpChannel.cpp
-	# ./library/network/TcpConnection.cpp
-	# ./library/network/TcpServer.cpp
-	# ./library/network/TcpSession.cpp
-	# ./library/network/epoll/Epoll.cpp
-	# ./library/network/epoll/EpollChannel.cpp
-	# ./library/network/epoll/EpollScheduler.cpp
-	# ./library/network/event/EventLoop.cpp
-	# ./library/network/event/EventThread.cpp
-	# ./library/network/event/EventThreadPool.cpp
+	./library/network/TcpConnection.cpp
+	./library/network/TcpServer.cpp
+	./library/network/TcpSession.cpp
+	./library/network/epoll/Epoll.cpp
+	./library/network/epoll/EpollChannel.cpp
+	./library/network/epoll/EpollWorker.cpp
 	./library/network/socket/Buffer.cpp
 	./library/network/socket/Packet.cpp
 	./library/network/socket/Address.cpp
 	./library/network/socket/Socket.cpp
-	# ./library/network/socket/TcpSocket.cpp
+	./library/network/socket/TcpSocket.cpp
 	./library/utils/FileSystem.cpp
 	./library/utils/ThreadUtil.cpp
 	./library/utils/StringUtil.cpp
@@ -149,12 +145,12 @@ link_directories(./lib)
 # libboost_filesystem.a
 # )
 
-add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
-target_link_libraries(test_scheduler PUBLIC ${Boost_LIBRARIES}
-libyaml-cpp.so
-dl
-OpenSSL::SSL OpenSSL::Crypto
-)
+# add_executable(test_scheduler ./tests/TestScheduler.cpp ${LIB_SRC})
+# target_link_libraries(test_scheduler PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# dl
+# OpenSSL::SSL OpenSSL::Crypto
+# )
 
 # add_executable(test_log ./tests/TestLog.cpp ${LIB_SRC})
 # add_executable(test_client ./tests/TestTcpClient.cpp ${LIB_SRC})
@@ -200,9 +196,9 @@ OpenSSL::SSL OpenSSL::Crypto
 # OpenSSL::SSL OpenSSL::Crypto
 # )
 
-# add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
-# target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
-# libyaml-cpp.so
-# dl
-# OpenSSL::SSL OpenSSL::Crypto
-# )
+add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
+target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
+libyaml-cpp.so
+dl
+OpenSSL::SSL OpenSSL::Crypto
+)

@@ -8,38 +8,44 @@
 #include "../../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
-TcpSocket::TcpSocket(int family, int type, int protocol, bool nonblock): Socket(family, type, protocol), m_isNonblock(nonblock)
+TcpSocket::TcpSocket(const std::string addr, int family, int type, int protocol, bool nonblock)
+	: m_addr(Address::LookupAny(addr, family, type, protocol)), m_sock(Socket::CreateTCP(m_addr)), 
+	m_isNonblock(nonblock)
 {
+	if(nonblock)	setNonblock();
+}
+
+TcpSocket::TcpSocket(Socket::ptr sock, bool nonblock): m_sock(sock), m_isNonblock(nonblock)
+{
+	if(nonblock)	setNonblock();
 }
 
 TcpSocket::~TcpSocket()
 {
-	close();
+	m_sock->close();
 }
 
-int TcpSocket::bind(std::string ip, unsigned short port)
+int TcpSocket::bind()
 {
-	std::string str = ip + ":";
-	str += port;
-	return Socket::bind(Address::LookupAny(str));
+	return m_sock->bind(m_addr);
 }
 
 int TcpSocket::connect(std::string ip, unsigned short port)
 {
 	std::string str = ip + ":";
 	str += port;
-	return Socket::connect(Address::LookupAny(str));
+	return m_sock->connect(Address::LookupAny(str));
 }
 
 bool TcpSocket::send(std::shared_ptr<Buffer>& buffer, int& sendSize)
 {
-	if(!isValid())	return false;
+	if(!m_sock->isValid())	return false;
 
 	std::vector<iovec> iovs;
 	buffer->getReadBuffers(iovs, buffer->getUnreadSize());
 
 	sendSize = 0;
-	int retp = Socket::send(&iovs[0], iovs.size());
+	int retp = m_sock->send(&iovs[0], iovs.size());
 	if (retp > 0)
 	{
 		// move message from buffer
@@ -63,7 +69,7 @@ bool TcpSocket::send(std::shared_ptr<Buffer>& buffer, int& sendSize)
 
 bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 {
-	if (!isValid()) return false;
+	if (!m_sock->isValid()) return false;
 
 	int retp = 0;
 	recvSize = 0;
@@ -86,7 +92,7 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 		iovs.push_back(extraIov);
 
 		// received
-		retp = Socket::recv(&iovs[0], iovs.size());
+		retp = m_sock->recv(&iovs[0], iovs.size());
 		if(retp > 0)
 		{
 			int extraReadSize = retp - buffer->getFreeSize();
@@ -140,29 +146,45 @@ std::string TcpSocket::getLastError()
 	int optval;
 	socklen_t optlen = static_cast<socklen_t>(sizeof(optval));
 
-	return getOption(SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0
+	return m_sock->getOption(SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0
 		? strerror(errno) : strerror(optval);
 }
 
 void TcpSocket::setNonblock()
 {
-	int oldFlag = fcntl(m_sock, F_GETFL, 0);
+	int oldFlag = fcntl(m_sock->getSocket(), F_GETFL, 0);
 	int newFlag = oldFlag | O_NONBLOCK;
 
-	fcntl(m_sock, F_SETFL, newFlag);
+	fcntl(m_sock->getSocket(), F_SETFL, newFlag);
 	m_isNonblock = true;
 }
 
 void TcpSocket::initSock()
 {
-	Socket::initSock();
+	m_sock->initSock();
 	if(m_isNonblock)	setNonblock();
 }
 
 bool TcpSocket::init(int sock)
 {
-    Socket::init(sock);
+    m_sock->init(m_sock->getSocket());
 	if(m_isNonblock)	setNonblock();
 }
+
+void TcpSocket::listen(int backlog)
+{
+	m_sock->listen(backlog);
+}
+
+TcpSocket::ptr TcpSocket::accept()
+{
+	return std::make_shared<TcpSocket>(m_sock->accept());
+}
+
+void TcpSocket::close()
+{
+	m_sock->close();
+}
+
 
 #endif

@@ -137,13 +137,13 @@ public:
 
     inline int getSocket() const { return m_sock;}
 
-protected:
-
     virtual void initSock();
 
     void newSock();
 
     virtual bool init(int sock);
+
+
 protected:
     int m_sock;
     int m_family;

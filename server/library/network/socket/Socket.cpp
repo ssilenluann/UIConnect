@@ -2,7 +2,6 @@
 #define SOCKET_SOCKET_CPP
 
 #include "Socket.h"
-#include "../epoll/EpollScheduler.h"
 #include "../../hook/FDManager.h"
 #include "../../hook/Hook.h"
 #include "../../log/Logger.h"

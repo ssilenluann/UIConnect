@@ -11,6 +11,7 @@
 
 #include "../thread/Thread.h"
 #include "../thread/ThreadPool.hpp"
+#include "./SchedulerWorker.h"
 #include <memory>
 #include <functional>
 
@@ -32,27 +33,6 @@ struct CoroutineJobTarget
 
 };
 
-
-template<class T>
-class Scheduler;
-
-template<class T>
-class SchedulerThreadPool: public ThreadPool<T>
-{
-public:
-
-    SchedulerThreadPool(std::function<void(std::shared_ptr<T>)> funcWithThread, std::shared_ptr<Scheduler<T>>sc, int threadCount = 4)
-    {
-        ThreadPool<T>::m_size = threadCount;
-        for(int i = 0; i < threadCount; i++)
-        {
-            ThreadPool<T>::m_threads[i].reset(new T(sc));
-            ThreadPool<T>::m_threads[i]->bind(funcWithThread);
-        }
-    }
-};
-
-
 template<class T>
 class Scheduler: public std::enable_shared_from_this<Scheduler<T>>
 {
@@ -63,7 +43,7 @@ public:
 public:
 
     Scheduler(size_t threads = 1, const std::string& name = "", bool callerThreadJoinWorker = true) 
-        : m_name(name), m_threadCount(threads)
+        : m_name(name), m_threadCount(threads), m_workThreadPool(new ThreadPool<T>(threads))
     {
     }
 
@@ -158,7 +138,7 @@ public:
             cbCoroutine->setState(Coroutine::HOLD);          
     }
 
-    void start()
+    virtual void start()
     {
         // setScheduler();
 
@@ -172,11 +152,15 @@ public:
                 std::placeholders::_1);
 
         // create thread pool and specify each thread's entry function   
-        m_workThreadPool.reset(new SchedulerThreadPool<T>(
-            schedulerMainFunc, this->shared_from_this(), m_threadCount));
+        // m_workThreadPool.reset(new SchedulerThreadPool<T>(
+        //     schedulerMainFunc, this->shared_from_this(), m_threadCount));
+        for(int i = 0; i < m_threadCount; i++)
+        {
+            m_workThreadPool->getThread(i)->setScheduler(this->shared_from_this());
+            m_workThreadPool->getThread(i)->bind(schedulerMainFunc);
+        }
 
         m_workThreadPool->start();
-        m_workThreadPool->detach();
     }
 
     void stop()
@@ -214,14 +198,17 @@ public:
     inline MutexType& mutex() { return m_mutex;}
     inline std::list<CoroutineJobTarget>& allCoroutines() {return m_coroutineTasks;}
 
-    static std::shared_ptr<Scheduler<T>> GetScheduler();
-
     void waitForQuit()
     {
         m_workThreadPool->join();
     }
 
     bool allowWorkerQuit() { return m_isStopping && m_coroutineTasks.empty();}
+
+    std::shared_ptr<T> getNextWorker()
+    {
+        m_workThreadPool->getNextThread();
+    }
 
 public:
     /**
@@ -251,57 +238,9 @@ protected:
     MutexType m_mutex;
     std::string m_name;  
     size_t m_threadCount = 0;
-    std::shared_ptr<SchedulerThreadPool<T>> m_workThreadPool;
+    std::shared_ptr<ThreadPool<T>> m_workThreadPool;
     std::list<CoroutineJobTarget> m_coroutineTasks;    // coroutines ready to run
     ConditionMutex m_cv;
-};
-
-
-class SchedulerWorker: public Thread, private std::enable_shared_from_this<SchedulerWorker>
-{
-public:
-    SchedulerWorker(const std::string &name = ""): Thread(){}
-    SchedulerWorker(std::shared_ptr<Scheduler<SchedulerWorker>> scheduler): m_scheduler(scheduler)
-    {
-    }
-
-    virtual void work()
-    {
-    
-        // LOG_INFO(g_logger) << "idle";
-        while(!readyToQuit())
-            Coroutine::Yield2Hold();
-
-    }
-    virtual bool readyToQuit()
-    {
-        if(m_scheduler.expired())   return true;
-        return m_scheduler.lock()->isStopping() && m_scheduler.lock()->allowWorkerQuit();        
-    }
-    
-    void bind(std::function<void(std::shared_ptr<SchedulerWorker>)> funcWithThread)
-    {
-        m_schedulerFunc = funcWithThread;
-    }
-
-    void entry() override
-    {
-        // LOG_INFO(g_logger) << "thread entry start, thread_name = " << m_name;
-        if(!m_schedulerFunc)
-        {
-            // LOG_ERROR(g_logger) << "thread main func unvalid, thread entry exit";
-            return;
-        }
-
-        m_schedulerFunc(shared_from_this());
-        // LOG_ERROR(g_logger) << "thread entry function end, thread_name = " << m_name;
-        
-        m_isEnd = true;
-        m_cv.notify_all();
-    }
-protected:
-    std::weak_ptr<Scheduler<SchedulerWorker>> m_scheduler;
-    std::function<void(std::shared_ptr<SchedulerWorker>)> m_schedulerFunc;
 };
 
 #endif

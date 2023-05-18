@@ -6,7 +6,7 @@
 #include "./socket/Packet.h"
 #include "./socket/TcpSocket.h"
 #include "EpollChannel.h"
-#include "./epoll/EpollScheduler.h"
+#include "./epoll/EpollWorker.h"
 
 class TcpConnection
 {
@@ -16,14 +16,14 @@ class TcpConnection
     typedef std::function<void(Packet&)> PROCESS_FUNC;
 
 public:
-    TcpConnection(TcpSocket::ptr& sock, std::shared_ptr<EpollScheduler> loop = nullptr);
+    TcpConnection(TcpSocket::ptr& sock, std::shared_ptr<EpollWorker> loop = nullptr);
     ~TcpConnection();
 
     // TcpConnection(const TcpConnection& connection) = delete;
     TcpConnection& operator=(const TcpConnection& rhs) = delete;
     
     bool init();
-    inline int fd() { return m_socket->getSocket();}
+    inline int fd() { return m_socket->fd();}
 
     void onRead();
     void onWrite();
@@ -48,7 +48,7 @@ private:
     std::shared_ptr<Buffer> m_readBuffer;
     std::shared_ptr<Buffer> m_writeBuffer;
 
-    std::weak_ptr<EpollScheduler> m_loop;
+    std::weak_ptr<EpollWorker> m_epollWorker;
     std::shared_ptr<TcpSocket> m_socket;
     std::shared_ptr<EpollChannel> m_channel;
 

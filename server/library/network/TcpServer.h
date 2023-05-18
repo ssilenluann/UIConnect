@@ -6,14 +6,15 @@
 #include <atomic>
 #include <list>
 #include "./socket/TcpSocket.h"
-#include "./event/EventLoop.h"
-#include "./event/EventThreadPool.h"
+#include "./epoll/EpollWorker.h"
 #include "./TcpSession.h"
 #include "Callback.h"
 
 class TcpServer 
 {
 public:
+	typedef std::shared_ptr<TcpServer> ptr;
+	
 	TcpServer(int threadCount = 4);
 	virtual ~TcpServer();
 
@@ -32,12 +33,14 @@ private:
 	void setQuitCallback(CALLBACK func);
 
 private:
-	std::shared_ptr<EventLoop> m_loop;
 	std::shared_ptr<TcpSocket> m_sock;
 	std::shared_ptr<EpollChannel> m_channel;
-	std::shared_ptr<EventThreadPool> m_pool;
+	std::shared_ptr<Scheduler<EpollWorker>> m_epollWorkers;
+	std::shared_ptr<EpollWorker> m_acceptor;
 	std::mutex m_mutex;
 	std::atomic_int m_sessionId;
+	bool m_isStoped;
+	
 
 	CALLBACK m_startCallback;
 	CALLBACK m_errorCallback;

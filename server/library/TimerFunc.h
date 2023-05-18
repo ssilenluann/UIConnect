@@ -47,7 +47,8 @@ class TimerManager: public std::enable_shared_from_this<TimerManager>
 friend class TimerFunc;
 public:
     typedef RWMutex RWMutexType;
-
+    typedef std::shared_ptr<TimerManager> ptr;
+    
     TimerManager();
     virtual ~TimerManager();
     TimerFunc::ptr addTimer(uint64_t cycle, std::function<void()> cb, bool oneshot = true);

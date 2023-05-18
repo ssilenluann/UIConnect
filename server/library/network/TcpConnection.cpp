@@ -5,10 +5,10 @@
 #include "../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
-TcpConnection::TcpConnection(TcpSocket::ptr& sock, std::shared_ptr<EpollScheduler> loop)
+TcpConnection::TcpConnection(TcpSocket::ptr& sock, std::shared_ptr<EpollWorker> worker)
     : m_state(ConnState::Disconnected), m_readBuffer(new Buffer()), 
-    m_writeBuffer(new Buffer()), m_loop(loop), m_socket(sock), 
-    m_channel(new EpollChannel(loop, m_socket->getSocket())){}
+    m_writeBuffer(new Buffer()), m_epollWorker(worker), m_socket(sock), 
+    m_channel(new EpollChannel(worker, m_socket->fd())){}
 
 TcpConnection::~TcpConnection()
 {
@@ -81,7 +81,7 @@ void TcpConnection::onWrite()
     // other side closed
     if(retp == false || size == 0)
     {
-        LOG_FMT_INFO(g_logger, "other side closed, socket fd = %d, errno = %d", m_socket->getSocket(), errno);
+        LOG_FMT_INFO(g_logger, "other side closed, socket fd = %d, errno = %d", m_socket->fd(), errno);
         onClose();
         return;
     }
@@ -89,7 +89,7 @@ void TcpConnection::onWrite()
     // socket error
     if(retp == false && size < 0)
     {
-        LOG_FMT_INFO(g_logger, "socket error, socket fd = %d, errno = %d", m_socket->getSocket(), errno);
+        LOG_FMT_INFO(g_logger, "socket error, socket fd = %d, errno = %d", m_socket->fd(), errno);
         onError();
         return;
     }
@@ -118,10 +118,10 @@ bool TcpConnection::send(Packet& pack)
 
 void TcpConnection::onError()
 {
-    LOG_FMT_INFO(g_logger, "connection error and will be closed, socket fd = %d, errno = %d", m_socket->getSocket(), errno);
+    LOG_FMT_INFO(g_logger, "connection error and will be closed, socket fd = %d, errno = %d", m_socket->fd(), errno);
     onClose();
     if(m_errorCallback)
-        m_errorCallback(m_socket->getSocket());
+        m_errorCallback(m_socket->fd());
 }
 
 void TcpConnection::onClose()
@@ -135,7 +135,7 @@ void TcpConnection::onClose()
 
     m_state = ConnState::Disconnected;
     if(m_closeCallback)
-        m_closeCallback(m_socket->getSocket());
+        m_closeCallback(m_socket->fd());
     
 }
 
