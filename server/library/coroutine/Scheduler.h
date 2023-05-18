@@ -140,8 +140,6 @@ public:
 
     virtual void start()
     {
-        // setScheduler();
-
         MutexType::Lock lock(m_mutex);
         if(!m_isStopping) return;
         m_isStopping = false;
@@ -156,7 +154,8 @@ public:
         //     schedulerMainFunc, this->shared_from_this(), m_threadCount));
         for(int i = 0; i < m_threadCount; i++)
         {
-            m_workThreadPool->getThread(i)->setScheduler(this->shared_from_this());
+            auto sc = this->shared_from_this();
+            m_workThreadPool->getThread(i)->setScheduler(sc);
             m_workThreadPool->getThread(i)->bind(schedulerMainFunc);
         }
 
@@ -205,7 +204,7 @@ public:
 
     bool allowWorkerQuit() { return m_isStopping && m_coroutineTasks.empty();}
 
-    std::shared_ptr<T> getNextWorker()
+    std::shared_ptr<T>& getNextWorker()
     {
         m_workThreadPool->getNextThread();
     }

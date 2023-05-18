@@ -28,18 +28,19 @@ void EpollWorker::work()
     while(!readyToQuit())
     {
         uint64_t next_timeout = 0;
-        int cntAct = 0;
+        
+        int eveCnt = 0;
         do
         {
             static const int MAX_TIMEOUT = 3000;
             next_timeout = (next_timeout > MAX_TIMEOUT || next_timeout == 0)
                 ? MAX_TIMEOUT : next_timeout;
 
-            cntAct = m_epoller->poll(m_activeChannels, next_timeout);
+            eveCnt = m_epoller->poll(m_activeChannels, next_timeout);
             // cntAct = epoll_wait(m_epfd, events, MAX_EVENT_COUNT, (int)next_timeout);
-            if(cntAct < 0 && errno == EINTR)
+            if(eveCnt < 0 && errno == EINTR)
                 continue;   // interrupted, conitnue
-            if(cntAct < 0)
+            if(eveCnt < 0)
                 LOG_DEBUG(g_logger) << "epoll error, instace fd = " << m_epoller->fd()
                     << ", errno = " << errno << ", err info: " << strerror(errno);
             
@@ -47,19 +48,19 @@ void EpollWorker::work()
             break;
         }while(true);
 
-        for(int i = 0; i < cntAct; ++i)
+        for(int i = 0; i < eveCnt; ++i)
         {
 
             // process events
-            RWMutexType::ReadLock lock(m_rwMutex);
-            if(m_sessions.find(m_activeChannels[i]->fd()) == m_sessions.end())
-            {
-                LOG_ERROR(g_logger) << "unknown fd event";
-                continue;
-            }
+            // RWMutexType::ReadLock lock(m_rwMutex);
+            // if(m_sessions.find(m_activeChannels[i]->fd()) == m_sessions.end())
+            // {
+            //     LOG_ERROR(g_logger) << "unknown fd event";
+            //     continue;
+            // }
             
             m_activeChannels[i]->handleEvent();
-            lock.unlock();
+            // lock.unlock();
         }
 
         // call timer
@@ -80,6 +81,29 @@ void EpollWorker::work()
     }
 }
 
+void EpollWorker::entry()
+{
+    // LOG_INFO(g_logger) << "thread entry start, thread_name = " << m_name;
+    if(!m_schedulerFunc)
+    {
+        // LOG_ERROR(g_logger) << "thread main func unvalid, thread entry exit";
+        return;
+    }
+
+    m_schedulerFunc(std::dynamic_pointer_cast<EpollWorker>(shared_from_this()));
+    // LOG_ERROR(g_logger) << "thread entry function end, thread_name = " << m_name;
+    
+    m_isEnd = true;
+    m_cv.notify_all();
+}
+
+bool EpollWorker::readyToQuit()
+{
+    if(m_scheduler.expired())   return true;
+    return m_scheduler.lock()->isStopping() && m_scheduler.lock()->allowWorkerQuit();        
+
+}
+
 void EpollWorker::bind(std::function<void(std::shared_ptr<EpollWorker>)> funcWithThread)
 {
     m_schedulerFunc = funcWithThread;
@@ -95,7 +119,7 @@ TimerFunc::ptr EpollWorker::addConditionTimer(uint64_t cycle, std::function<void
     return m_timer->addConditionTimer(cycle, cb, weak_cond, oneshot);
 }
 
-bool EpollWorker::updateChannel(int action, int fd, std::shared_ptr<EpollChannel> channel, int event)
+bool EpollWorker::updateChannel(int action, int fd, std::shared_ptr<EpollChannel> channel, uint32_t event)
 {
     return m_epoller->updateChannel(action, fd, channel, event);
 }
@@ -104,6 +128,13 @@ void EpollWorker::addSession(std::shared_ptr<TcpSession> session)
 {
     RWMutexType::WriteLock lock(m_rwMutex);
     m_sessions[session->id()] = session;
+}
+
+TcpSession::ptr EpollWorker::getSession(const unsigned long& sessionId)
+{
+    if(m_sessions.find(sessionId) == m_sessions.end())
+        return nullptr;
+    return m_sessions[sessionId];
 }
 
 void EpollWorker::removeSession(unsigned long sessionId)

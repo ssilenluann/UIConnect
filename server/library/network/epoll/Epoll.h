@@ -12,7 +12,7 @@
 
 #define EPOLL_EVENT_ADD_SIZE 1024
 
-class Epoll: Noncopyable
+class Epoll
 {
 public:
     typedef std::shared_ptr<Epoll> ptr;
@@ -29,14 +29,14 @@ public:
      * @brief update listening event of channel in epoll instance
      * @param: action: EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL
     */
-    bool updateChannel(int action, int fd, std::shared_ptr<EpollChannel>& channel, int event);
+    bool updateChannel(int action, int fd, std::shared_ptr<EpollChannel>& channel, uint32_t event);
     
     /**
      * @brief epoll instance start listen ative events
      * @param[out] activeChannels if fd is active, add it to active Channels
      * @param[in] listen timeout
     */
-    bool poll(CHANNEL_VEC& activeChannels, int timeout = 1000);
+    int poll(CHANNEL_VEC& activeChannels, int timeout = 1000);
 
     inline int fd() const { return m_epfd;}
     bool isValid() const { return m_epfd != -1;};
@@ -47,12 +47,12 @@ private:
     /**
      * @brief update listening event of channel in epoll instance
     */
-    bool ctrl(EpollChannel::ptr& pChannel, int op, int eventType);
+    bool ctrl(EpollChannel::ptr& pChannel, int op, uint32_t eventType);
 
     /**
      * @brief update listening event of fd
     */
-    bool ctrl(int fd, int op, int eventType);
+    bool ctrl(int fd, int op, uint32_t eventType);
     
 private:
     

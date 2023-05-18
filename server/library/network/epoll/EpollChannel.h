@@ -5,10 +5,11 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "../socket/Packet.h"
 
 class EpollWorker;
 
-class EpollChannel: private std::enable_shared_from_this<EpollChannel>
+class EpollChannel: public std::enable_shared_from_this<EpollChannel>
 {
 public:
     typedef std::shared_ptr<EpollChannel> ptr;
@@ -36,17 +37,17 @@ public:
     bool disableWriting();
     bool disable();
 
-    bool setTargetEvent(int targetEvent);
-    bool addTargetEvent(int targetEvent);
+    bool setTargetEvent(uint32_t targetEvent);
+    bool addTargetEvent(uint32_t targetEvent);
 
-    static const int noneEvent;
-    static const int readEvent;
-    static const int writeEvent;
+    static const uint32_t noneEvent;
+    static const uint32_t readEvent;
+    static const uint32_t writeEvent;
 
 protected:
     int m_fd;
-    int m_targetEvent;      // listening events in epoll instance
-    int m_activeEvent;      // events detacted by epoll instance
+    uint32_t m_targetEvent;      // listening events in epoll instance
+    uint32_t m_activeEvent;      // events detacted by epoll instance
     EventCallback m_onRead;
     EventCallback m_onWrite;
     EventCallback m_onClose;

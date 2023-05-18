@@ -7,104 +7,24 @@
 static Logger::ptr g_logger = LOG_NAME("system");
 
 TcpServer::TcpServer(int threadCount)
-: m_epollWorkers(new Scheduler<EpollWorker>(threadCount)), m_acceptor(new EpollWorker()), m_isStoped(false)
+: m_acceptor(new TcpAcceptor(threadCount)), m_isStoped(false)
 {
 }
 
 TcpServer::~TcpServer(){}
 
-bool TcpServer::bind(std::string ip, int port)
-{
-	std::string addr = ip + ":";
-	addr += std::to_string(port);
-    
-	LOG_DEBUG(g_logger) << "create tcp socket, addr: " << addr;
-	m_sock = std::make_shared<TcpSocket>(addr);
-	if(!m_sock->isValid())
-	{
-		LOG_FMT_FATAL(g_logger, "create sockerror, errno = %d, info: %s", errno, strerror(errno));
-	}
-
-	int retp =  m_sock->bind();
-	if(retp < 0)
-	{
-		LOG_FMT_FATAL(g_logger, "server bind port error, socket fd = %d, errno = %d", m_sock->fd(), errno);
-	}
-
-	m_channel = std::make_shared<EpollChannel>(m_acceptor, m_sock->fd());
-	return retp >= 0;
-}
-
-bool TcpServer::listen()
-{
-	m_sock->listen();
-	bool retp = m_channel->enableReading();
-	if(!retp)
-	{
-		LOG_FMT_FATAL(g_logger, "server listen port error, socket fd = %d, errno = %d", m_sock->fd(), errno);
-	}
-
-	return retp;
-}
-
-bool TcpServer::init(std::string ip, int port)
-{
-	m_epollWorkers->start();
-
-	if(!bind(ip, port) || !listen())
-	{
-		LOG_FATAL(g_logger) << "server init failed";
-		return false;
-	}
-
-	m_channel->setReadCallback(std::bind(&TcpServer::onConnect, this));
-	m_channel->setErrorCallback(std::bind(&TcpServer::onError, this));
-
-	return true;
-}
-
-void TcpServer::run()
+void TcpServer::run(const std::string& addr)
 {
 	LOG_INFO(g_logger) << "server started";
-	m_acceptor->bind(std::bind(&EpollWorker::work, m_acceptor));
-	m_acceptor->run();
-	m_acceptor->join();	// waitting for quit
+	m_acceptor->run(addr);
 	LOG_INFO(g_logger) << "server main loop ended";
-}
-
-void TcpServer::onConnect()
-{
-	TcpSocket::ptr sock = m_sock->accept();
-	if(!sock->isValid())
-	{
-		LOG_INFO(g_logger) << "accept failed";
-		return;
-	}
-	
-	std::shared_ptr<EpollWorker> worker = m_epollWorkers->getNextWorker();
-	m_sessionId++;
-	std::unique_ptr<TcpConnection> connection(new TcpConnection(sock, worker));
-	worker->addSession(std::make_shared<TcpSession>(m_sessionId, std::move(connection), worker));
-
-}
-
-
-void TcpServer::onError()
-{
-	std::cout << m_sock->fd() << " error, msg: " << m_sock->getLastError() << std::endl;
 }
 
 void TcpServer::exit()
 {
 	LOG_INFO(g_logger) << "server start quit";
-	// 1. disable listen channel
-	m_channel->disable();
-	// 2. quit listen loop
-	// m_workers->stop();	
-	// 3. close thread pool
-	m_epollWorkers->stop();
-	// 4.close listen sock
-	m_sock->close();
+	m_acceptor->exit();
+	if(m_quitCallback)	m_quitCallback();
 	LOG_INFO(g_logger) << "server quited";
 }
 
@@ -115,7 +35,7 @@ void TcpServer::setStartCallback(CALLBACK func)
 
 void TcpServer::setErrorCallback(CALLBACK func)
 {
-	m_errorCallback = func;
+	m_acceptor->setErrorCallback(func);
 }
 
 void TcpServer::setQuitCallback(CALLBACK func)

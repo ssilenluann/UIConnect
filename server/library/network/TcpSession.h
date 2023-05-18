@@ -4,8 +4,9 @@
 #include "TcpConnection.h"
 #include "Callback.h"
 #include "./epoll/EpollWorker.h"
-
-class TcpSession
+#include "reactor/Processor.h"
+#include <memory>
+class TcpSession: public std::enable_shared_from_this<TcpSession>
 {
 public:
     typedef std::shared_ptr<TcpSession> ptr;

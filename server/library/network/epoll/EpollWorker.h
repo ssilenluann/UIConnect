@@ -19,6 +19,9 @@ public:
     void setScheduler(std::shared_ptr<Scheduler<EpollWorker>> sc);
 
     virtual void work() override;
+    virtual void entry() override;
+    virtual bool readyToQuit() override;
+
     virtual void bind(std::function<void(std::shared_ptr<EpollWorker>)> funcWithThread);
 
     TimerFunc::ptr addTimer(uint64_t cycle, std::function<void()> cb, bool oneshot = true);
@@ -27,11 +30,12 @@ public:
         std::weak_ptr<void> weak_cond, bool oneshot = true
     );
 
-    bool updateChannel(int action, int fd, std::shared_ptr<EpollChannel> channel, int event);
+    bool updateChannel(int action, int fd, std::shared_ptr<EpollChannel> channel, uint32_t event);
     
     void addSession(std::shared_ptr<TcpSession> session);
+    std::shared_ptr<TcpSession> getSession(const unsigned long& sessionId);
     void removeSession(unsigned long sessionId);
-
+    
 private:
     std::weak_ptr<Scheduler<EpollWorker>> m_scheduler;
     std::function<void(std::shared_ptr<EpollWorker>)> m_schedulerFunc;

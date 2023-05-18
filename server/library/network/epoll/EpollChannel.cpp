@@ -9,9 +9,9 @@
 
 static Logger::ptr g_logger = LOG_NAME("system");
 
-const int EpollChannel::noneEvent = 0;
-const int EpollChannel::readEvent = EPOLLIN | EPOLLHUP | EPOLLET;
-const int EpollChannel::writeEvent = EPOLLOUT | EPOLLET;
+const uint32_t EpollChannel::noneEvent = 0;
+const uint32_t EpollChannel::readEvent = EPOLLIN | EPOLLHUP | EPOLLET;
+const uint32_t EpollChannel::writeEvent = EPOLLOUT | EPOLLET;
 
 EpollChannel::EpollChannel(std::weak_ptr<EpollWorker> worker, int fd)
     : m_fd(fd), m_targetEvent(noneEvent), m_activeEvent(noneEvent), m_worker(worker)
@@ -20,7 +20,7 @@ EpollChannel::EpollChannel(std::weak_ptr<EpollWorker> worker, int fd)
 
 bool EpollChannel::enableReading()
 {
-    if((m_targetEvent & readEvent) > 0)
+    if((m_targetEvent & readEvent) > EPOLLET)
         return true;
     
     return m_targetEvent > 0 ? setTargetEvent(m_targetEvent | readEvent): addTargetEvent(readEvent);
@@ -28,7 +28,7 @@ bool EpollChannel::enableReading()
 
 bool EpollChannel::enableWriting()
 {
-    if((m_targetEvent & writeEvent) > 0)
+    if((m_targetEvent & writeEvent) > EPOLLET)
         return true;
     
     return m_targetEvent > 0 ? setTargetEvent(m_targetEvent | writeEvent): addTargetEvent(writeEvent);
@@ -65,7 +65,7 @@ bool EpollChannel::disable()
     return epollWorker->updateChannel(EPOLL_CTL_DEL, m_fd, shared_from_this(), 0);
 }
 
-bool EpollChannel::setTargetEvent(int targetEvent)
+bool EpollChannel::setTargetEvent(uint32_t targetEvent)
 {
     auto epollWorker = m_worker.lock();
     if(epollWorker == nullptr)
@@ -82,7 +82,7 @@ bool EpollChannel::setTargetEvent(int targetEvent)
 	return true;
 }
 
-bool EpollChannel::addTargetEvent(int targetEvent)
+bool EpollChannel::addTargetEvent(uint32_t targetEvent)
 {
     auto epollWorker = m_worker.lock();
     if(epollWorker == nullptr)
@@ -95,7 +95,7 @@ bool EpollChannel::addTargetEvent(int targetEvent)
 	if(!retp)
 	{
         m_targetEvent = event;
-		LOG_FMT_ERROR(g_logger, "epoll update channel failed, socket fd = %d, errno = %d", m_fd, errno);
+		LOG_FMT_ERROR(g_logger, "epoll update channel failed, socket fd = %d, errno = %d, info = %s", m_fd, errno, strerror(errno));
 
 		return false;
 	}

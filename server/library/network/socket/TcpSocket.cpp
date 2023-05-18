@@ -8,16 +8,20 @@
 #include "../../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
-TcpSocket::TcpSocket(const std::string addr, int family, int type, int protocol, bool nonblock)
-	: m_addr(Address::LookupAny(addr, family, type, protocol)), m_sock(Socket::CreateTCP(m_addr)), 
+TcpSocket::TcpSocket(const std::string& addr, int family, int type, int protocol, bool nonblock)
+	: m_addr(Address::LookupAny(addr, family, type, protocol)), m_sock(Socket::CreateTCP(m_addr)),
 	m_isNonblock(nonblock)
 {
-	if(nonblock)	setNonblock();
+	if(m_isNonblock)	setNonblock();
+}
+
+TcpSocket::TcpSocket(int family, int type, int protocol, bool nonblock)
+	: m_isNonblock(nonblock)
+{
 }
 
 TcpSocket::TcpSocket(Socket::ptr sock, bool nonblock): m_sock(sock), m_isNonblock(nonblock)
 {
-	if(nonblock)	setNonblock();
 }
 
 TcpSocket::~TcpSocket()
@@ -30,11 +34,13 @@ int TcpSocket::bind()
 	return m_sock->bind(m_addr);
 }
 
-int TcpSocket::connect(std::string ip, unsigned short port)
+int TcpSocket::connect(const std::string& address)
 {
-	std::string str = ip + ":";
-	str += port;
-	return m_sock->connect(Address::LookupAny(str));
+	m_addr = Address::LookupAny(address);
+	m_sock = Socket::CreateTCP(m_addr);
+	if(m_isNonblock)	setNonblock();
+
+	return m_sock->connect(m_addr);
 }
 
 bool TcpSocket::send(std::shared_ptr<Buffer>& buffer, int& sendSize)

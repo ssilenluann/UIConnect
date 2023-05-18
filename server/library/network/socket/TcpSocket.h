@@ -8,12 +8,13 @@
 #include "../../Noncopiable.h"
 
 #include <memory>
-class TcpSocket: public Noncopyable
+class TcpSocket
 {
 public:
 	typedef std::shared_ptr<TcpSocket> ptr;
 	
-	TcpSocket(const std::string addr, int family = AF_INET, int type = 0, int protocol = 0, bool nonblock = true);
+	TcpSocket(const std::string& addr, int family = AF_INET, int type = 0, int protocol = 0, bool nonblock = true);
+	TcpSocket(int family = AF_INET, int type = 0, int protocol = 0, bool nonblock = true);
 	TcpSocket(Socket::ptr sock, bool nonblock = true);
 
 	~TcpSocket();
@@ -21,7 +22,8 @@ public:
 public:
 
 	int bind();
-	int connect(std::string ip, unsigned short port);
+	// adderess: ip:port
+	int connect(const std::string& address);
 	/**
 	 * @brief buffer data out
 	 * @return

@@ -7,6 +7,7 @@ static Logger::ptr g_logger = LOG_NAME("system");
 bool Buffer::setMsg(const char* msg, int size)
 {
 	write(msg, size);
+	hasWritten(size);
 	return true;
 }
 

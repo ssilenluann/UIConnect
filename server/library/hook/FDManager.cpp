@@ -15,7 +15,7 @@ FDItem::ptr FDManager::get(int fd, bool create)
     RWMutexType::ReadLock lock(m_mutex);
     if(m_fds.size() <= fd && create == false)
         return nullptr;
-    if(m_fds[fd] || !create)
+    if(m_fds[fd])
         return m_fds[fd];
     lock.unlock();
 

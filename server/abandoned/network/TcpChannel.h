@@ -40,15 +40,15 @@ public:
     }
 
 public:
-    static const int noneEvent;
-    static const int readEvent;
-    static const int writeEvent;
+    static const uint32_t noneEvent;
+    static const uint32_t readEvent;
+    static const uint32_t writeEvent;
 
 private:
     SOCKET m_fd;
 
-    int m_targetEvent;
-    int m_activeEvent;
+    uint32_t m_targetEvent;
+    uint32_t m_activeEvent;
 
     EventCallback m_onRead;
     EventCallback m_onWrite;

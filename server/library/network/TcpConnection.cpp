@@ -101,7 +101,7 @@ void TcpConnection::onWrite()
     }
 
     // epoll event is in LT mode, if write buffer is empty, remove event
-    if(m_writeBuffer->empty())
+    if(m_writeBuffer->getUnreadSize() == 0)
         m_channel->disableWriting();
 
     if(m_writeCallback)

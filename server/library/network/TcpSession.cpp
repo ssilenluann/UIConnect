@@ -13,6 +13,7 @@ TcpSession::TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> c
 : m_sessionId(sessionId), m_epollWorker(worker)
 {
     m_connection.reset(connection.release());
+    m_connection->init();
 }
 
 TcpSession::~TcpSession()
@@ -42,9 +43,7 @@ void TcpSession::send(Packet& pack)
 
 void TcpSession::handleMessage(Packet& pack)
 {
-    // echo
-    // std::cout << pack.dataLoad() << std::endl;
-    send(pack);
+    ProcessorProxy::Instance().handleMsg(pack, shared_from_this());
 }
 
 bool TcpSession::removeConnection(int socket)

@@ -56,6 +56,7 @@ set(LIB_SRC
 	./library/network/TcpConnection.cpp
 	./library/network/TcpServer.cpp
 	./library/network/TcpSession.cpp
+	./library/network/TcpAcceptor.cpp
 	./library/network/epoll/Epoll.cpp
 	./library/network/epoll/EpollChannel.cpp
 	./library/network/epoll/EpollWorker.cpp
@@ -202,3 +203,11 @@ libyaml-cpp.so
 dl
 OpenSSL::SSL OpenSSL::Crypto
 )
+
+add_executable(echo_client ./examples/EchoClient.cpp ${LIB_SRC})
+target_link_libraries(echo_client PUBLIC ${Boost_LIBRARIES}
+libyaml-cpp.so
+dl
+OpenSSL::SSL OpenSSL::Crypto
+)
+

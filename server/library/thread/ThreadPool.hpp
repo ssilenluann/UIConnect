@@ -7,8 +7,8 @@
 #include <memory>
 #include <thread>
 #include <functional>
+#include <assert.h>
 #include "../log/Logger.h"
-
 template<class T>
 class ThreadPool
 {
@@ -80,20 +80,21 @@ public:
             thread->join();        
     }
 
-    std::shared_ptr<T> getNextThread() 
+    std::shared_ptr<T>& getNextThread() 
     {
-        if(m_threads.empty())   return nullptr;
+        assert(m_threads.size() > 0);
 
         static int no = 0;
+        no ++;
         if(no >= m_threads.size())  
             no = 0;
         
         return m_threads[no];
     }
 
-    std::shared_ptr<T> getThread(int no) 
+    std::shared_ptr<T>& getThread(int no) 
     {
-        if(no >= m_threads.size())   return nullptr;
+        assert(m_threads.size() > 0);
         return m_threads[no];
     }
     
