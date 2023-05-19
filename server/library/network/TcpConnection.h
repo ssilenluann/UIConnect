@@ -5,52 +5,54 @@
 #include "./socket/Buffer.h"
 #include "./socket/Packet.h"
 #include "./socket/TcpSocket.h"
-#include "EpollChannel.h"
-#include "./epoll/EpollWorker.h"
-
+#include "TcpChannel.h"
 class TcpConnection
 {
-    typedef std::shared_ptr<TcpConnection> ptr;
-    typedef std::function<void(int socket)> EVENT_CALLBACK;
+
+    typedef std::function<void(SOCKET socket)> EVENT_CALLBACK;
     typedef std::function<void(int)> WRITE_CALLBACK;
     typedef std::function<void(Packet&)> PROCESS_FUNC;
 
 public:
-    TcpConnection(TcpSocket::ptr& sock, std::shared_ptr<EpollWorker> loop = nullptr);
+    TcpConnection(SOCKET fd = INVALID_SOCKET, std::shared_ptr<EventLoop> loop = nullptr);
     ~TcpConnection();
 
     // TcpConnection(const TcpConnection& connection) = delete;
     TcpConnection& operator=(const TcpConnection& rhs) = delete;
     
-    bool init();
-    inline int fd() { return m_socket->fd();}
+    virtual bool init();
+    inline SOCKET fd() { return m_socket->fd();}
 
-    void onRead();
+    virtual void onRead();
     void onWrite();
     void onError();
     void onClose();
 
     bool send(Packet& pack);
 
-    void setReadCallback(PROCESS_FUNC func) { m_readCallback = func;}
-	void setWriteCallback(WRITE_CALLBACK func) { m_writeCallback = func;}
-	void setErrorCallback(EVENT_CALLBACK func) { m_errorCallback = func;}
-	void setCloseCallback(EVENT_CALLBACK func) { m_closeCallback = func;}
+    void setReadCallback(PROCESS_FUNC func);
+	void setWriteCallback(WRITE_CALLBACK func);
+	void setErrorCallback(EVENT_CALLBACK func);
+	void setCloseCallback(EVENT_CALLBACK func);
     enum ConnState {Disconnected = 0, Connecting, Connected, Disconnecting};
 
-	std::shared_ptr<EpollChannel> getChannel() { return m_channel;}
-    ConnState status() { return m_state;}
-    inline bool isClosed() { return m_state == Disconnected;}
+	std::shared_ptr<TcpChannel> getChannel();
+    ConnState status();
+
+    inline bool isClosed()
+    {
+        return m_state == Disconnected;
+    }
     
-private:
+protected:
     ConnState m_state;
 
     std::shared_ptr<Buffer> m_readBuffer;
     std::shared_ptr<Buffer> m_writeBuffer;
 
-    std::weak_ptr<EpollWorker> m_epollWorker;
+    std::weak_ptr<EventLoop> m_loop;
     std::shared_ptr<TcpSocket> m_socket;
-    std::shared_ptr<EpollChannel> m_channel;
+    std::shared_ptr<TcpChannel> m_channel;
 
     PROCESS_FUNC m_readCallback;
     WRITE_CALLBACK m_writeCallback;

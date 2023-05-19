@@ -1,47 +1,39 @@
+#include "network/event/EventLoop.h"
 #include "network/socket/TcpSocket.h"
-#include "network/socket/Packet.h"
 #include "network/TcpConnection.h"
 #include "network/TcpSession.h"
-#include "network/epoll/EpollChannel.h"
-#include "network/epoll/EpollWorker.h"
-#include "reactor/Processor.h"
-#include "log/Logger.h"
+#include "reactor/EchoProcessor.h"
 
-static Logger::ptr g_logger = LOG_ROOT();
-
-class EchoProcessor: public Processor
-{
-public:
-    void handleMsg(Packet& msg, std::shared_ptr<TcpSession> session)
-    {
-        LOG_DEBUG(g_logger) << msg.dataLoad();
-        session->send(msg);
-    }
-};
-
+#define CLIENT_COUNT 2000
 
 int main()
 {
-    TcpSocket::ptr client = std::make_shared<TcpSocket>();
-    client->connect("127.0.0.1:5261");
+    ProcessorProxy::Instance().setProcessor(std::shared_ptr<Processor>(new EchoProcessor()));
 
-    ProcessorProxy::Instance().setProcessor(std::make_shared<EchoProcessor>());
+    std::shared_ptr<EventLoop> loop(new EventLoop());
+    
+    std::vector<std::shared_ptr<TcpSocket>> clients;
+    clients.resize(CLIENT_COUNT);
+    
+    for(int i = 0; i < clients.capacity(); i++)
+    {
+        clients[i].reset(new TcpSocket());
+        clients[i]->connect("127.0.0.1", 30030);
 
-    std::shared_ptr<Scheduler<EpollWorker>> clientEpoller(new Scheduler<EpollWorker>(1));
+        std::unique_ptr<TcpConnection> connection(new TcpConnection(clients[i]->fd(), loop));
+        std::shared_ptr<TcpSession> session(new TcpSession(i, std::move(connection), loop));
+        loop->addSession(session);
 
-    std::shared_ptr<EpollWorker> worker = clientEpoller->getNextWorker();
-	std::unique_ptr<TcpConnection> connection(new TcpConnection(client, worker));
-	worker->addSession(std::make_shared<TcpSession>(1, std::move(connection), worker));
-
-    clientEpoller->schedule(
+        loop->addTask(
         [&]()
         {
             std::string str = "test echo";
             Packet pack(1, str.c_str(), str.size());
-            worker->getSession(1)->send(pack);
-
+            session->send(pack);
         }
-    );
-    clientEpoller->start();
-    clientEpoller->waitForQuit();
+        );
+    }
+
+    loop->loop();
+    return 0;
 }

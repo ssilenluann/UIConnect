@@ -5,10 +5,10 @@
 #include "../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
-TcpConnection::TcpConnection(TcpSocket::ptr& sock, std::shared_ptr<EpollWorker> worker)
-    : m_state(ConnState::Disconnected), m_readBuffer(new Buffer()), 
-    m_writeBuffer(new Buffer()), m_epollWorker(worker), m_socket(sock), 
-    m_channel(new EpollChannel(worker, m_socket->fd())){}
+TcpConnection::TcpConnection(SOCKET fd, std::shared_ptr<EventLoop> loop)
+: m_state(ConnState::Disconnected), m_readBuffer(new Buffer()), 
+m_writeBuffer(new Buffer()), m_loop(loop), m_socket(new TcpSocket(fd)), 
+m_channel(new TcpChannel(loop, m_socket->fd())){}
 
 TcpConnection::~TcpConnection()
 {
@@ -23,7 +23,7 @@ bool TcpConnection::init()
     m_channel->setErrorCallback(std::bind(&TcpConnection::onError, this));
     m_channel->setCloseCallback(std::bind(&TcpConnection::onClose, this));
 	
-	bool retp =  m_channel->addTargetEvent(EpollChannel::readEvent);
+	bool retp =  m_channel->addTargetEvent(TcpChannel::readEvent);
     if(retp)
         m_state = ConnState::Connected;
     return retp;
@@ -46,7 +46,7 @@ void TcpConnection::onRead()
     // error
     if(retp == false && size == -1)
     {
-        LOG_ERROR(g_logger) << "socket error, erron = " << errno << ", info: " << strerror(errno);
+        // TODO: LOG
         onError();
         return;
     }
@@ -101,7 +101,7 @@ void TcpConnection::onWrite()
     }
 
     // epoll event is in LT mode, if write buffer is empty, remove event
-    if(m_writeBuffer->getUnreadSize() == 0)
+    if(m_writeBuffer->empty())
         m_channel->disableWriting();
 
     if(m_writeCallback)
@@ -139,4 +139,33 @@ void TcpConnection::onClose()
     
 }
 
+void TcpConnection::setReadCallback(PROCESS_FUNC func)
+{
+	m_readCallback = func;	
+}
+
+void TcpConnection::setWriteCallback(WRITE_CALLBACK func)
+{
+	m_writeCallback = func;
+}
+
+void TcpConnection::setErrorCallback(EVENT_CALLBACK func)
+{
+	m_errorCallback = func;
+}
+
+void TcpConnection::setCloseCallback(EVENT_CALLBACK func)
+{
+	m_closeCallback = func;
+}
+
+std::shared_ptr<TcpChannel> TcpConnection::getChannel()
+{
+	return m_channel;
+}
+
+TcpConnection::ConnState TcpConnection::status()
+{
+    return m_state;
+}
 #endif

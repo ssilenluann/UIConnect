@@ -43,8 +43,8 @@ set(LIB_SRC
 	./library/TimerFunc.cpp
 	./library/thread/Thread.cpp
 	./library/thread/ThreadPool.hpp
-	./library/coroutine/Coroutine.cpp
-	./library/coroutine/SchedulerWorker.cpp
+	# ./library/coroutine/Coroutine.cpp
+	# ./library/coroutine/SchedulerWorker.cpp
 	./library/log/LogFormatter.cpp
 	./library/log/Logger.cpp
 	./library/log/LoggerManager.cpp
@@ -53,18 +53,22 @@ set(LIB_SRC
 	./library/log/LogOutputter.cpp
 	./library/log/outputter/LogFileOutputter.cpp
 	./library/log/outputter/LogStdoutOutputter.cpp
+	./library/network/TcpChannel.cpp
 	./library/network/TcpConnection.cpp
 	./library/network/TcpServer.cpp
 	./library/network/TcpSession.cpp
-	./library/network/TcpAcceptor.cpp
 	./library/network/epoll/Epoll.cpp
-	./library/network/epoll/EpollChannel.cpp
-	./library/network/epoll/EpollWorker.cpp
+	./library/network/event/EventLoop.cpp
+	./library/network/event/EventThread.cpp
+	./library/network/event/EventThreadPool.cpp
 	./library/network/socket/Buffer.cpp
 	./library/network/socket/Packet.cpp
-	./library/network/socket/Address.cpp
-	./library/network/socket/Socket.cpp
+	./library/network/socket/SockAddr.hpp
+	./library/network/socket/Socket.hpp
 	./library/network/socket/TcpSocket.cpp
+	./library/reactor/EchoProcessor.cpp
+	./library/reactor/HttpDispatcher.cpp
+	./library/reactor/IndexHttpProcessor.cpp
 	./library/utils/FileSystem.cpp
 	./library/utils/ThreadUtil.cpp
 	./library/utils/StringUtil.cpp
@@ -74,15 +78,14 @@ set(LIB_SRC
 	./library/config/Config.cpp
 	./library/hook/FDItem.cpp
 	./library/hook/FDManager.cpp
-	# ./library/hook/Hook.cpp
-	# ./library/socket/TcpServer.cpp
-	# ./library/protocol/http/Http.cpp
-	# ./library/protocol/http/HttpRequest.cpp
-	# ./library/protocol/http/HttpResponse.cpp
-	# ./library/protocol/http/HttpRequestParser.cpp
-	# ./library/protocol/http/HttpResponseParser.cpp
-	# ./library/protocol/http/HttpConnection.cpp
-	# ./library/protocol/http/HttpSession.cpp
+	./library/protocol/http/Http.cpp
+	./library/protocol/http/HttpRequest.cpp
+	./library/protocol/http/HttpResponse.cpp
+	./library/protocol/http/HttpRequestParser.cpp
+	./library/protocol/http/HttpResponseParser.cpp
+	./library/protocol/http/HttpConnection.cpp
+	./library/protocol/http/HttpSession.cpp
+	./library/protocol/http/HttpServer.cpp
 	# ./library/stream/Stream.cpp
 	# ./library/stream/SocketStream.cpp
 )
@@ -211,3 +214,9 @@ dl
 OpenSSL::SSL OpenSSL::Crypto
 )
 
+add_executable(http_server ./examples/HttpServer.cpp ${LIB_SRC})
+target_link_libraries(http_server PUBLIC ${Boost_LIBRARIES}
+libyaml-cpp.so
+dl
+OpenSSL::SSL OpenSSL::Crypto
+)

@@ -6,9 +6,9 @@
 #include <cstring>
 
 #ifndef _WIN32
-	typedef uint16_t WORD;
-	typedef uint64_t DWORD;
-	typedef uint8_t BYTE;
+	typedef unsigned short WORD;
+	typedef unsigned long DWORD;
+	typedef unsigned char BYTE;
 #endif
 
 enum class PackCommand
@@ -52,7 +52,7 @@ public:
 	}
 
 public:
-	WORD head;				// fixed head data: FE FF
+	WORD head;				// fixed head data: FF FE
 	DWORD length;			// pack size
 	WORD cmd;				// command
 	DWORD dataLoadPos;	    // valid message head

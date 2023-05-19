@@ -5,16 +5,15 @@
 #include "../../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
 
-Epoll::Epoll(): m_epfd(-1)
+Epoll::Epoll(): m_epfd(INVALID_SOCKET), m_events(EPOLL_EVENT_ADD_SIZE)
 {
 	m_epfd = epoll_create(1);
     if(m_epfd < 0)
     {
-        m_epfd = -1;
+        m_epfd = INVALID_SOCKET;
         LOG_FATAL(g_logger) << "create epoll fd error\r\n";
     }
 
-    m_events.reserve(EPOLL_EVENT_ADD_SIZE);
 }
 
 Epoll::~Epoll()
@@ -22,7 +21,80 @@ Epoll::~Epoll()
     close();
 }
 
-bool Epoll::updateChannel(int action, int fd, std::shared_ptr<EpollChannel>& channel, uint32_t event)
+bool Epoll::poll(CHANNEL_LIST& activeChannels, int timeout)
+{
+    int eventNum = 0;
+
+    // for(;;)
+    // {
+        eventNum = epoll_wait(m_epfd, &*m_events.begin(), static_cast<int>(m_events.size()), timeout);
+        if(eventNum == -1 && errno != EINTR && errno != EAGAIN)
+        {
+            LOG_FMT_ERROR(g_logger, "epoll wait error, fd = %d, errno = %d", m_epfd, errno);
+            return false;
+        }
+    //     if(eventNum == -1 && (errno == EINTR || errno == EAGAIN))
+    //         continue;
+    // }
+
+        
+    // if event list fulled, enlarge it
+    if(eventNum == m_events.size())
+        m_events.resize(eventNum*2);
+    
+    for(int i = 0; i < eventNum; i++)
+    {
+        if(m_channels.find(m_events[i].data.fd) == m_channels.end())
+        {
+        
+            LOG_FMT_INFO(g_logger, "unknown active channels, epoll fd = %d, event fd = %d", 
+            m_epfd, m_events[i].data.fd);
+            continue;
+        }
+
+        m_channels[m_events[i].data.fd]->setActiveEvent(m_events[i].events);
+        activeChannels.emplace_back(m_channels[m_events[i].data.fd]);
+    }
+
+    return true;
+}
+
+bool Epoll::isValid()
+{
+    return m_epfd != INVALID_SOCKET;
+}
+
+// LT mode
+bool Epoll::ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, uint32_t eventType)
+{
+    if(!isValid())  return false;
+    
+    epoll_event event;
+    event.data.fd = pChannel->fd();
+    event.events = eventType;
+    int retp = epoll_ctl(m_epfd, op, pChannel->fd(), &event);
+    if(retp < 0)
+    {
+        LOG_FMT_ERROR(g_logger, "epoll ctrl error, epoll fd = %d, event fd = %d, errno = %d", 
+        m_epfd, event.data.fd, errno);
+    }
+
+    return retp >= 0;
+}
+
+bool Epoll::ctrl(SOCKET fd, int op, uint32_t eventType)
+{
+    if(m_channels.find(fd) == m_channels.end())
+    {
+        LOG_INFO(g_logger) << "unknown sock fd";
+        return false;
+    }
+    
+    return ctrl(m_channels[fd], op, eventType);
+}
+
+// @param: action: EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL
+bool Epoll::updateChannel(int action, SOCKET fd, std::shared_ptr<TcpChannel>& channel, uint32_t event)
 {
 
     // validate
@@ -62,86 +134,15 @@ bool Epoll::updateChannel(int action, int fd, std::shared_ptr<EpollChannel>& cha
     return true;
 }
 
-int Epoll::poll(CHANNEL_VEC& activeChannels, int timeout)
-{
-    m_events.clear();
-    int size = m_events.capacity();
-    int eventNum = 0;
-
-    for(;;)
-    {
-        eventNum = epoll_wait(m_epfd, &m_events[0], size, timeout);
-        if(eventNum == -1 && errno != EINTR && errno != EAGAIN)
-        {
-            LOG_FMT_ERROR(g_logger, "epoll wait error, fd = %d, errno = %d, info = %s", m_epfd, errno, strerror(errno));
-            return eventNum;
-        }
-        if(eventNum == -1 && (errno == EINTR || errno == EAGAIN))
-        {
-            LOG_FMT_ERROR(g_logger, "epoll wait error, fd = %d, errno = %d, info = %s", m_epfd, errno, strerror(errno));
-            continue;
-        }
-        break;
-    }
-   
-    // if event list fulled, enlarge it
-    if(eventNum == m_events.capacity())
-        m_events.resize(eventNum*2);
-    
-    for(int i = 0; i < eventNum; i++)
-    {
-        if(m_channels.find(m_events[i].data.fd) == m_channels.end())
-        {
-        
-            LOG_FMT_INFO(g_logger, "unknown active channels, epoll fd = %d, event fd = %d, info = %s", strerror(errno), 
-            m_epfd, m_events[i].data.fd);
-            continue;
-        }
-
-        m_channels[m_events[i].data.fd]->setActiveEvent(m_events[i].events);
-        activeChannels.emplace_back(m_channels[m_events[i].data.fd]);
-    }
-
-    return eventNum;
-}
-
 void Epoll::close()
 {
-    if(m_epfd == -1)    return;
+    if(m_epfd == INVALID_SOCKET)    return;
 
     LOG_INFO(g_logger) << "epoll exit";
     ::close(m_epfd);
-    m_epfd = -1;
+    m_epfd = INVALID_SOCKET;
     m_events.clear();
     m_channels.clear();
-}
-
-bool Epoll::ctrl(EpollChannel::ptr& pChannel, int op, uint32_t eventType)
-{
-    if(!isValid())  return false;
-    
-    epoll_event event;
-    event.data.fd = pChannel->fd();
-    event.events = eventType;
-    int retp = epoll_ctl(m_epfd, op, pChannel->fd(), &event);
-    if(retp < 0)
-    {
-        LOG_FMT_ERROR(g_logger, "epoll ctrl error, epoll fd = %d, event fd = %d, errno = %d, info = %s", 
-        m_epfd, event.data.fd, errno, strerror(errno));
-    }
-
-    return retp >= 0;
-}
-
-bool Epoll::ctrl(int fd, int op, uint32_t eventType)
-{
-    if(m_channels.find(fd) == m_channels.end())
-    {
-        LOG_INFO(g_logger) << "unknown sock fd";
-        return false;
-    }
-    
-    return ctrl(m_channels[fd], op, eventType);
 }
 
 #endif

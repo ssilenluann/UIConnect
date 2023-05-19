@@ -2,6 +2,9 @@
 #define PROTOCOL_HTTP_HTTPCONNECTION_H
 
 #include <memory>
+#include "../../network/TcpConnection.h"
+#include "HttpResponse.h"
+#include "HttpRequest.h"
 
 struct HttpResult
 {
@@ -21,7 +24,7 @@ struct HttpResult
         POOL_INVALID_CONNECTION = 9,
     };
 
-    HttpResult(int result, HttpResponse::ptr& error, const std::string& error) {}
+    HttpResult(int result, HttpResponse::ptr& error, const std::string& info) {}
 
     int result;
     HttpResponse::ptr response;
@@ -30,10 +33,20 @@ struct HttpResult
 };
 
 // http client class
-class HttpConnection
+class HttpConnection: public TcpConnection
 {
 public:
+    typedef std::function<void(std::shared_ptr<HttpRequest>)> HTTP_READ_CB;
+
+    HttpConnection(SOCKET fd = INVALID_SOCKET, std::shared_ptr<EventLoop> loop = nullptr);
     
+    virtual void onRead() override;
+    virtual bool init() override;
+    void setReadCallback(HTTP_READ_CB func);
+    bool send(std::shared_ptr<HttpResponse>& res);
+
+protected:
+    HTTP_READ_CB m_readCallback;
 };
 
 

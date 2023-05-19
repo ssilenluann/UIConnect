@@ -3,31 +3,39 @@
 
 #include "TcpConnection.h"
 #include "Callback.h"
-#include "./epoll/EpollWorker.h"
-#include "reactor/Processor.h"
-#include <memory>
+#include <atomic>
+#include <chrono>
+
+#define SESSION_TIMEOUT 3000
+#define SESSION_RATE 3000
+
+class EventLoop;
 class TcpSession: public std::enable_shared_from_this<TcpSession>
 {
 public:
-    typedef std::shared_ptr<TcpSession> ptr;
-
-    TcpSession(unsigned long sessionId, std::unique_ptr<TcpConnection> connection, std::shared_ptr<EpollWorker>& worker);
+    TcpSession(unsigned long sessionId, std::shared_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop);
     ~TcpSession();
 
     TcpSession(const TcpSession& session) = delete;
     TcpSession& operator=(const TcpSession& rhs) = delete;
     
-    bool init();
+    virtual bool init();
     void send(Packet& pack);
     void handleMessage(Packet& pack);
-    bool removeConnection(int socket);
-    bool removeConnectionInLoop(int socket);
+    bool removeConnection(SOCKET socket);
+    bool removeConnectionInLoop(SOCKET socket);
     inline unsigned long id() {return m_sessionId;}
+    void lifeControl();
     
-private:
+protected:
+    
     unsigned long m_sessionId;
-    std::weak_ptr<EpollWorker> m_epollWorker;
-    std::unique_ptr<TcpConnection> m_connection;
+    std::weak_ptr<EventLoop> m_loop;
+    std::shared_ptr<TcpConnection> m_connection;
     EVENT_CALLBACK m_closeCallback;
+
+    std::chrono::time_point<std::chrono::high_resolution_clock>  m_activeTime;
+    std::atomic<unsigned long long> m_msgSize;
+    
 };
 #endif

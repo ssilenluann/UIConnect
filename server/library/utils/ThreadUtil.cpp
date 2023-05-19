@@ -3,7 +3,6 @@
 #include <execinfo.h>
 
 #include "../log/Logger.h"
-#include "../coroutine/Coroutine.h"
 
 #include "ThreadUtil.h"
 #include "StringUtil.h"
@@ -80,7 +79,7 @@ std::string ThreadUtil::demanle(const char * str)
 
 uint32_t ThreadUtil::GetCoroutineId()
 {
-    return Coroutine::CurrentCoroutineId();
+    return 0;
 }
 
 #endif

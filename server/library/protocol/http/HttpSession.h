@@ -2,31 +2,21 @@
 #define PROTOCOL_HTTP_HTTPSESSION_H
 
 #include <memory>
-
+#include "../../network/TcpSession.h"
+#include "HttpConnection.h"
 #include "HttpRequest.h"
-#include "../stream/SocketStream.h"
 
-class HttpSession: public SocketStream
+class HttpSession: public TcpSession
 {
 public:
     typedef std::shared_ptr<HttpSession> ptr;
 
-    HttpSession(Socket::ptr sock);
+    HttpSession(unsigned long sessionId, std::shared_ptr<HttpConnection> connection, std::shared_ptr<EventLoop>& loop);
+    virtual bool init() override;
 
-    /**
-     * @brief recv http request
-    */
-    HttpRequest::ptr recvRequest();
+    void handleRequest(std::shared_ptr<HttpRequest> req);
+protected:
+    std::shared_ptr<HttpConnection> m_connection;
 
-    /**
-     * @brief send http response
-     * @param[in] rsp Http response
-     * @return 
-     *      @retval > 0 send success
-     *      @retval = 0 connection close
-     *      @retval < 0 socket error
-    */
-    int sendResponse(HttpResponse::ptr rsp);
 };
-
 #endif
