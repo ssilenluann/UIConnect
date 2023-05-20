@@ -2,6 +2,7 @@
 #define UTILS_STRINGUTIL_H
 
 #include <cxxabi.h>
+#include <string>
 class StringUtil
 {
 public:
@@ -13,7 +14,7 @@ public:
         return s_name;
     }
 
-
+    static void ToLower(std::string& str);
 
 };
 

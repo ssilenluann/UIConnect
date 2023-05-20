@@ -30,7 +30,7 @@ bool HttpSession::init()
 void HttpSession::handleRequest(std::shared_ptr<HttpRequest> req)
 {
     std::shared_ptr<HttpResponse> res(new HttpResponse());
-    HttpDispatcher::Instance().Dispatch(req, res);
+    HttpDispatcher::Instance().dispatch(req, res);
     m_connection->send(res);
 }
 

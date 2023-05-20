@@ -200,19 +200,19 @@ link_directories(./lib)
 # OpenSSL::SSL OpenSSL::Crypto
 # )
 
-add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
-target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
-libyaml-cpp.so
-# dl
-# OpenSSL::SSL OpenSSL::Crypto
-)
+# add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
+# target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# # dl
+# # OpenSSL::SSL OpenSSL::Crypto
+# )
 
-add_executable(echo_client ./examples/EchoClient.cpp ${LIB_SRC})
-target_link_libraries(echo_client PUBLIC ${Boost_LIBRARIES}
-libyaml-cpp.so
-# dl
-# OpenSSL::SSL OpenSSL::Crypto
-)
+# add_executable(echo_client ./examples/EchoClient.cpp ${LIB_SRC})
+# target_link_libraries(echo_client PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# # dl
+# # OpenSSL::SSL OpenSSL::Crypto
+# )
 
 add_executable(http_server ./examples/HttpServer.cpp ${LIB_SRC})
 target_link_libraries(http_server PUBLIC ${Boost_LIBRARIES}

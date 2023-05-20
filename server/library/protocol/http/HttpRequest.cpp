@@ -23,6 +23,7 @@ std::string HttpRequest::getHeader(const std::string &key, const std::string &de
 
 std::string HttpRequest::getParam(const std::string &key, const std::string &defaultVal)
 {
+    
     auto it = m_params.find(key);
     return it == m_params.end() ? defaultVal : it->second;
 }
