@@ -35,9 +35,23 @@ public:
     bool checkChannelInLoop(std::shared_ptr<TcpChannel>& pChannel);
 	void addTask(TASK_FUNCTION task);
 	void doTasks();
-    void addSession(std::shared_ptr<TcpSession> session);
     void removeSession(unsigned long sessionId);
     TimerFunc::ptr addTimer(uint64_t cycle, std::function<void()> cb, bool oneshot = true);
+    
+    template<class T>
+    void addSession(std::shared_ptr<T> session)
+    {
+        addTask([session, this]()
+        {
+            if(!session->init())
+            {
+                // TOOD: log
+                return;
+            }
+
+            m_sessions.emplace(session->id(), std::move(session));
+        });
+    }
     
 private:
     std::thread::id m_threadId;

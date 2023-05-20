@@ -1,6 +1,8 @@
 #include "HttpServer.h"
 #include "HttpConnection.h"
 #include "HttpSession.h"
+#include "../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
 
 HttpServer::HttpServer(int threadCount): TcpServer(threadCount)
 {
@@ -24,8 +26,16 @@ void HttpServer::onConnect()
 
 bool HttpServer::init(std::string ip, int port)
 {
-	bool retp = TcpServer::init(ip, port);
-	m_channel->setReadCallback(std::bind(&HttpServer::onConnect, this));
+	m_pool->start();
 
-	return retp;
+	if(!bind(ip, port) || !listen())
+	{
+		LOG_FATAL(g_logger) << "server init failed";
+		return false;
+	}
+
+	m_channel->setReadCallback(std::bind(&HttpServer::onConnect, this));
+	m_channel->setErrorCallback(std::bind(&TcpServer::onError, this));
+
+	return true;
 }

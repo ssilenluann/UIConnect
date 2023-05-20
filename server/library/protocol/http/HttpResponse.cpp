@@ -48,7 +48,8 @@ std::ostream &HttpResponse::dump(std::ostream &ost)
     ost << "connection: " << (m_close? "close": "keep-alive") << "\r\n";
 
     if(!m_body.empty())
-        ost << "content-length: " << m_body.size() << "\r\n\r\n";
+        ost << "content-length: " << m_body.size() << "\r\n\r\n"
+            << m_body;
     else
         ost << "\r\n";
     

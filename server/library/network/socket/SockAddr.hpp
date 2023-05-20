@@ -63,6 +63,16 @@ public:
 		m_port = ntohs(m_addr.sin_port);
 	}
 
+	const std::string& ip() const
+	{
+		return m_ip;
+	}
+
+	const unsigned short port() const
+	{
+		return m_port;
+	}
+
 private:
 	sockaddr_in m_addr;
 	std::string m_ip;

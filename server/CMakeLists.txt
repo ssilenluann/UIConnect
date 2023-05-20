@@ -14,10 +14,10 @@ if(NOT Boost_FOUND)
 	message(FATAL_ERROR "Could not find required Boost libraries")
 endif()
 
-find_package(OpenSSL REQUIRED)
-if(NOT OpenSSL_FOUND)
-	message(FATAL_ERROR "Could not find required open-ssl libraries")
-endif()
+# find_package(OpenSSL REQUIRED)
+# if(NOT OpenSSL_FOUND)
+# 	message(FATAL_ERROR "Could not find required open-ssl libraries")
+# endif()
 
 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -200,23 +200,23 @@ link_directories(./lib)
 # OpenSSL::SSL OpenSSL::Crypto
 # )
 
-add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
-target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
-libyaml-cpp.so
-dl
-OpenSSL::SSL OpenSSL::Crypto
-)
+# add_executable(echo_server ./examples/EchoServer.cpp ${LIB_SRC})
+# target_link_libraries(echo_server PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# dl
+# OpenSSL::SSL OpenSSL::Crypto
+# )
 
-add_executable(echo_client ./examples/EchoClient.cpp ${LIB_SRC})
-target_link_libraries(echo_client PUBLIC ${Boost_LIBRARIES}
-libyaml-cpp.so
-dl
-OpenSSL::SSL OpenSSL::Crypto
-)
+# add_executable(echo_client ./examples/EchoClient.cpp ${LIB_SRC})
+# target_link_libraries(echo_client PUBLIC ${Boost_LIBRARIES}
+# libyaml-cpp.so
+# dl
+# OpenSSL::SSL OpenSSL::Crypto
+# )
 
 add_executable(http_server ./examples/HttpServer.cpp ${LIB_SRC})
 target_link_libraries(http_server PUBLIC ${Boost_LIBRARIES}
 libyaml-cpp.so
 dl
-OpenSSL::SSL OpenSSL::Crypto
+# OpenSSL::SSL OpenSSL::Crypto
 )

@@ -63,7 +63,7 @@ int TcpSocket::bind(const SockAddr& addr)
 		return SOCKET_ERROR;
 	}
 
-	LOG_DEBUG(g_logger) << "tcp bind seccessufully";
+	LOG_DEBUG(g_logger) << "tcp bind seccessufully, fd: " << m_sock->fd() << ", address: [" << addr.ip() << ":" << addr.port() << "]";
 	return 0;
 }
 

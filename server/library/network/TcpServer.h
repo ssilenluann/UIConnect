@@ -20,12 +20,14 @@ public:
 	virtual bool init(std::string ip, int port);
 	void run();
 
-private:
-	bool bind(std::string ip, int port);
-	bool listen();
+public:
 	virtual void onConnect();
 	virtual void onError();
 	virtual void exit();
+	
+protected:
+	bool bind(std::string ip, int port);
+	bool listen();
 
 	void setStartCallback(CALLBACK func);
 	void setErrorCallback(CALLBACK func);

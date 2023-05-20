@@ -28,7 +28,7 @@ public:
     inline void setHeaders(const MapType& v) { m_headers = v;}
 
     bool isClose() const {return m_close;}
-    bool setClose(bool v) {m_close = v;}
+    bool setClose(bool v = false) {m_close = v;}
 
     std::string getHeader(const std::string& key, const std::string& defaultVal) const;
     void setHeader(const std::string& key, const std::string& val);

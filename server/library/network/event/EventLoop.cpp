@@ -148,20 +148,6 @@ void EventLoop::doTasks()
 		
 }
 
-void EventLoop::addSession(std::shared_ptr<TcpSession> session)
-{
-    addTask([session, this]()
-    {
-        if(!session->init())
-        {
-            // TOOD: log
-            return;
-        }
-
-        m_sessions.emplace(session->id(), std::move(session));
-    });
-}
-
 void EventLoop::removeSession(unsigned long sessionId)
 {
     addTask([&]()

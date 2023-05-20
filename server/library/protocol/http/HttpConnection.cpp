@@ -31,7 +31,7 @@ void HttpConnection::onRead()
 
     for(;;)
     {
-        if(m_readBuffer->pos() == 0)    break;
+        if(m_readBuffer->pos() == 0 || m_readBuffer->find(" ", 1) == std::string::npos)    break;
         
         std::string methodOrRes(m_readBuffer->start(), m_readBuffer->find(" ", 1));
         if(Http::String2HttpMethod(methodOrRes) != HttpMethod::INVALID_METHOD)
@@ -86,8 +86,15 @@ void HttpConnection::onRead()
 
 bool HttpConnection::init()
 {
-    bool retp = TcpConnection::init();
     m_channel->setReadCallback(std::bind(&HttpConnection::onRead, this));
+    m_channel->setWriteCallback(std::bind(&HttpConnection::onWrite, this));
+    m_channel->setErrorCallback(std::bind(&TcpConnection::onError, this));
+    m_channel->setCloseCallback(std::bind(&TcpConnection::onClose, this));
+	
+	bool retp =  m_channel->addTargetEvent(TcpChannel::readEvent);
+    if(retp)
+        m_state = ConnState::Connected;
+
     return retp;
 }
 

@@ -79,6 +79,8 @@ bool Epoll::ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, uint32_t eventTy
         m_epfd, event.data.fd, errno);
     }
 
+    LOG_DEBUG(g_logger) << "epoll ctrl: epoll instance fd: " << m_epfd << ", operation: " << op 
+        << ", target fd: " << pChannel->fd() << ", events: " << event.events;
     return retp >= 0;
 }
 
