@@ -8,11 +8,12 @@ HttpSession::HttpSession(unsigned long sessionId, std::shared_ptr<HttpConnection
 
 bool HttpSession::init()
 {
-    TcpSession::init();
+    bool retp = TcpSession::init();
     m_connection->setReadCallback(
         std::bind(&HttpSession::handleRequest, this, std::placeholders::_1)
     );
 
+    return retp;
 }
 
 void HttpSession::handleRequest(std::shared_ptr<HttpRequest> req)

@@ -15,7 +15,7 @@ class TcpConnection
 
 public:
     TcpConnection(SOCKET fd = INVALID_SOCKET, std::shared_ptr<EventLoop> loop = nullptr);
-    ~TcpConnection();
+    virtual ~TcpConnection();
 
     // TcpConnection(const TcpConnection& connection) = delete;
     TcpConnection& operator=(const TcpConnection& rhs) = delete;

@@ -19,5 +19,13 @@ void HttpServer::onConnect()
 
 	m_sessionId++;
 	std::shared_ptr<HttpConnection> connection(new HttpConnection(sock, loop));
-	loop->addSession(std::make_shared<TcpSession>(m_sessionId, connection, loop));
+	loop->addSession(std::make_shared<HttpSession>(m_sessionId, connection, loop));
+}
+
+bool HttpServer::init(std::string ip, int port)
+{
+	bool retp = TcpServer::init(ip, port);
+	m_channel->setReadCallback(std::bind(&HttpServer::onConnect, this));
+
+	return retp;
 }

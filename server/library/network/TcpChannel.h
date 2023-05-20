@@ -11,6 +11,7 @@ class TcpChannel: public std::enable_shared_from_this<TcpChannel>
 
 public:
     TcpChannel(std::weak_ptr<EventLoop> loop, SOCKET fd);
+    virtual ~TcpChannel() {}
 
     void setReadCallback(EventCallback cb);
     void setWriteCallback(EventCallback cb);

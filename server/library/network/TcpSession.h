@@ -14,7 +14,7 @@ class TcpSession: public std::enable_shared_from_this<TcpSession>
 {
 public:
     TcpSession(unsigned long sessionId, std::shared_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop);
-    ~TcpSession();
+    virtual ~TcpSession();
 
     TcpSession(const TcpSession& session) = delete;
     TcpSession& operator=(const TcpSession& rhs) = delete;

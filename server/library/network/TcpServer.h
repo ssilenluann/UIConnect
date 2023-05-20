@@ -17,7 +17,7 @@ public:
 	TcpServer(int threadCount = 4);
 	virtual ~TcpServer();
 
-	bool init(std::string ip, int port);
+	virtual bool init(std::string ip, int port);
 	void run();
 
 private:

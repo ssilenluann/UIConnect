@@ -31,6 +31,8 @@ void HttpConnection::onRead()
 
     for(;;)
     {
+        if(m_readBuffer->pos() == 0)    break;
+        
         std::string methodOrRes(m_readBuffer->start(), m_readBuffer->find(" ", 1));
         if(Http::String2HttpMethod(methodOrRes) != HttpMethod::INVALID_METHOD)
         {
@@ -84,8 +86,9 @@ void HttpConnection::onRead()
 
 bool HttpConnection::init()
 {
-    TcpConnection::init();
+    bool retp = TcpConnection::init();
     m_channel->setReadCallback(std::bind(&HttpConnection::onRead, this));
+    return retp;
 }
 
 void HttpConnection::setReadCallback(HTTP_READ_CB func)
