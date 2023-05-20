@@ -97,6 +97,7 @@ private:
     HttpStatus m_status;
     uint8_t m_version;
     bool m_close;
+    bool m_websocket;
 
     std::string m_path;
     std::string m_query;

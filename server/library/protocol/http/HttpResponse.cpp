@@ -5,7 +5,7 @@
 #include <string.h>
 
 HttpResponse::HttpResponse(uint8_t version, bool close)
-    : m_status(HttpStatus::OK), m_version(version), m_close(close)
+    : m_status(HttpStatus::OK), m_version(version), m_close(close), m_websocket(false)
 {
 }
 
@@ -45,7 +45,9 @@ std::ostream &HttpResponse::dump(std::ostream &ost)
         ost << i.first << ": " << i.second << "\r\n";
     }
 
-    ost << "connection: " << (m_close? "close": "keep-alive") << "\r\n";
+    if(!m_websocket) {
+        ost << "connection: " << (m_close ? "close" : "keep-alive") << "\r\n";
+    }
 
     if(!m_body.empty())
         ost << "content-length: " << m_body.size() << "\r\n\r\n"
