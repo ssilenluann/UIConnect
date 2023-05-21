@@ -671,8 +671,9 @@ void ByteArray::hasRead(size_t size)
 
     while(tmpPos < m_readPos)
     {
-        m_readBlock = m_readBlock->next;
         tmpPos += m_baseSize;
+        if(tmpPos < m_readPos)
+            m_readBlock = m_readBlock->next;
     }
 }
 
@@ -686,8 +687,9 @@ void ByteArray::hasWritten(size_t size)
 
     while(tmpPos < m_writePos)
     {
-        m_writeBlock = m_writeBlock->next;
         tmpPos += m_baseSize;
+        if(tmpPos < m_writePos)
+            m_writeBlock = m_writeBlock->next;
     }
 }
 

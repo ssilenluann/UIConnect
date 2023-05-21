@@ -92,6 +92,9 @@ public:
 
     std::ostream& dump(std::ostream& ost);
 
+    void setSize(int size) { m_size = size;}
+    int getSize() { return m_size;}
+
 private:
     HttpMethod m_method;
     HttpStatus m_status;
@@ -107,5 +110,7 @@ private:
     MapType m_headers;
     MapType m_params;
     MapType m_cookies;
+
+    int m_size;
 };
 #endif

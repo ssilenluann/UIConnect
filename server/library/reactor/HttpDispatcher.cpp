@@ -31,6 +31,10 @@ void HttpDispatcher::dispatch(std::shared_ptr<HttpRequest> req, std::shared_ptr<
         }
     }
 
+    // 404 not found
+    res->setVersion(0x11);
+    res->setHeader("Server", "Luansi/UIConnect");
+    res->setClose(false);
     res->setStatus(HttpStatus::NOT_FOUND);
     res->setBody("resouce not found");
     return;

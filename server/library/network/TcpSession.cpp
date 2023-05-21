@@ -5,16 +5,18 @@
 #include "./event/EventLoop.h"
 #include "../log/Logger.h"
 #include "../reactor/Processor.h"
+#include "../config/Config.h"
 #include <iostream>
 
 static Logger::ptr g_logger = LOG_NAME("system");
-
+static ConfigItem<int>::ptr g_session_timeout = Config::SearchOrAdd("tcp.session.timeout", 30000, "session time out");
+static ConfigItem<int>::ptr g_session_msg_handle_size = Config::SearchOrAdd("tcp.session.msg.handle_size", 3000, "session msg handle size");
 TcpSession::TcpSession(unsigned long sessionId, std::shared_ptr<TcpConnection> connection, std::shared_ptr<EventLoop>& loop)
 : m_sessionId(sessionId), m_loop(loop), 
     m_activeTime(std::chrono::high_resolution_clock::now())
 {
     m_connection = connection;
-    m_msgSize = 0;
+    m_processedMsgSize = 0;
 }
 
 TcpSession::~TcpSession()
@@ -34,7 +36,7 @@ bool TcpSession::init()
     m_connection->setReadCallback(std::bind(&TcpSession::handleMessage, this, std::placeholders::_1));
     m_connection->setCloseCallback(std::bind(&TcpSession::removeConnectionInLoop, this, std::placeholders::_1));
 
-    // lifeControl();
+    lifeControl();
     return true;
 }
 
@@ -45,6 +47,8 @@ void TcpSession::send(Packet& pack)
 
 void TcpSession::handleMessage(Packet& pack)
 {
+    m_activeTime = std::chrono::high_resolution_clock::now();
+    m_processedMsgSize += pack.packSize();
     ProcessorProxy::Instance().handleMsg(pack, shared_from_this());
 }
 
@@ -73,21 +77,25 @@ bool TcpSession::removeConnectionInLoop(SOCKET socket)
 }
 void TcpSession::lifeControl()
 {
-    // timeout and rate control
-    m_loop.lock()->addTimer(SESSION_TIMEOUT / 2,
-        [&]()
-        {
-            int duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - m_activeTime).count();
-            if(duration > SESSION_TIMEOUT || m_msgSize > SESSION_RATE)
-            {
-                LOG_INFO(g_logger) << "timeout or send too fast";
-                m_loop.lock()->removeSession(m_sessionId);
-                // removeConnection(m_connection->fd());
-            }
+    int timeout = g_session_timeout->getValue();
+    m_loop.lock()->addTimer(timeout, std::bind(&TcpSession::checkValid, this));
 
-            m_activeTime = std::chrono::high_resolution_clock::now();
-            m_msgSize = 0;
-        }, false
-    );
+}
+void TcpSession::checkValid()
+{
+    // timeout and rate control
+    int timeout = g_session_timeout->getValue();
+    int handleMsgSize = g_session_msg_handle_size->getValue();
+
+    int duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - m_activeTime).count();
+    if(duration > timeout || m_processedMsgSize > handleMsgSize)
+    {
+        LOG_INFO(g_logger) << "timeout or send too fast";
+        m_loop.lock()->removeSession(m_sessionId);
+    }
+
+    m_activeTime = std::chrono::high_resolution_clock::now();
+    m_processedMsgSize = 0;
+    m_loop.lock()->addTimer(timeout, std::bind(&TcpSession::checkValid, this));
 }
 #endif

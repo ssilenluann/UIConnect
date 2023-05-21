@@ -2,51 +2,15 @@
 #define NETWORK_SOCKET_BUFFER_CPP
 #include "Buffer.h"
 #include "../../log/Logger.h"
+
+#include <algorithm>
 static Logger::ptr g_logger = LOG_NAME("system");
-
-Buffer::Buffer() :m_pos(0)
-{
-	m_pos = 0;
-	memset(m_buffer, 0, BUFFER_SIZE);
-}
-
-Buffer::Buffer(const Buffer& buf)
-{
-	m_pos = buf.m_pos;
-	memcpy(m_buffer, buf.m_buffer, BUFFER_SIZE);
-
-}
-
-Buffer& Buffer::operator=(const Buffer& rhs)
-{
-	if (&rhs != this)
-	{
-		m_pos = rhs.m_pos;
-		memcpy(m_buffer, rhs.m_buffer, BUFFER_SIZE);
-	}
-	return *this;
-}
-
-void Buffer::operator-=(int rhs) { m_pos -= rhs; }
 
 bool Buffer::setMsg(const char* msg, int size)
 {
-	if (freeSize() < size)
-		return false;
-
-	memcpy(m_buffer + m_pos, msg, size);
-	m_pos += size;
-
+	write(msg, size);
+	hasWritten(size);
 	return true;
-}
-
-void Buffer::remove(int size)
-{
-	if (size > m_pos)	return;
-	memcpy(m_buffer, m_buffer + size, m_pos - size);
-	m_pos -= size;
-	memset(m_buffer + m_pos, 0, size);
-
 }
 
 std::shared_ptr<Packet> Buffer::getPack()
@@ -61,65 +25,75 @@ void Buffer::getPack(Packet& pack)
     return getPack(&pack);
 }
 
-int Buffer::find(const char * str, int len)
-{
-	for(int i = 0; i < m_pos; i++)
-	{
-		if(strncmp(str, &m_buffer[i], len) == 0)
-			return i;
-	}
-
-	return -1;
-}
-
 void Buffer::getPack(Packet* pack)
 {
 	int index = 0;
 	// get header
-	while (index < m_pos)
+	size_t tmpPos = m_readPos, packStartIndex = 0;
+	
+	for(;;)
 	{
-		if (*(WORD*)(m_buffer + index) == 0xFEFF)
-			break;
-		index++;
+		uint16_t header = 0;
+		read(&header, sizeof(header), tmpPos);
+		tmpPos += sizeof(header);
+		
+		if(header == 0xFEFF || tmpPos > getSize())	break;
 	}
 
-	if (index == m_pos || m_pos < int(index + sizeof(pack->cmd) + sizeof(pack->checkSum)))
-		return;
-
+	packStartIndex = tmpPos - sizeof(pack->head);
 	pack->head = 0xFEFF;
-	index += sizeof(pack->head);
-
-	pack->length = *(DWORD*)(m_buffer + index);
-	index += sizeof(pack->length);
-
-	if (m_pos < pack->length + (sizeof(pack->head) + sizeof(pack->length)))
+	if (getSize() - tmpPos < sizeof(pack->length))
 		return;
 
-	pack->cmd = *(WORD*)(m_buffer + index);
-	index += sizeof(pack->cmd);
+	read(&pack->length, sizeof(pack->length), tmpPos);
+	tmpPos += sizeof(pack->length);
+
+	if(getSize() - tmpPos < pack->length)
+		return;
+
+	read(&pack->cmd, sizeof(pack->cmd), tmpPos);
+	tmpPos += sizeof(pack->cmd);
 
 	pack->dataLoadPos = sizeof(pack->head) + sizeof(pack->length) + sizeof(pack->cmd);
 	pack->dataLoadSize = pack->length - (sizeof(pack->cmd) + sizeof(pack->checkSum));
-	index += pack->dataLoadSize;
+	
+	read(&pack->checkSum, sizeof(pack->checkSum), packStartIndex + pack->length - sizeof(pack->checkSum));
+	
+	pack->packData.resize(pack->length);
+	read(const_cast<char*>(pack->packData.c_str()), pack->length, packStartIndex);
 
-	pack->checkSum = *(WORD*)(m_buffer + index);
-	index += sizeof(pack->checkSum);
-
-	WORD sum = 0;
+	uint16_t sum = 0;
 	for (int i = pack->dataLoadPos; i < pack->dataLoadPos + pack->dataLoadSize; i++)
 	{
-		sum += (BYTE(m_buffer[i]) & 0xFF);
+		sum += (uint8_t(pack->packData[i]) & 0xFF);
 	}
 
 	if (sum != pack->checkSum)
 	{
-		pack->cmd = DWORD(PackCommand::INVALID);
+		pack->cmd = uint64_t(PackCommand::INVALID);
 	}
 
-	pack->packData.resize(index);
-	memcpy((char*)pack->packData.c_str(), m_buffer, index);
+	tmpPos = packStartIndex + pack->length;
+	hasRead(tmpPos - m_readPos);
+}
 
-	remove(index);
+
+int Buffer::find(const std::string & str, std::string& prefix, int readLength)
+{
+	readLength = std::min((size_t)readLength, getUnreadSize());
+	if(readLength == 0)	return std::string::npos;
+	
+	std::string buf;
+	buf.resize(readLength);
+
+	read(static_cast<void*>(&buf[0]), readLength);
+
+	int pos = buf.find(str);
+	if(pos == std::string::npos)	return pos;
+
+	prefix = buf.substr(0, pos);
+	return pos;
 }
 
 #endif
+

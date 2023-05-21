@@ -45,8 +45,14 @@ public:
     void setReadCallback(HTTP_READ_CB func);
     bool send(std::shared_ptr<HttpResponse>& res);
 
+    void onParseRequestError(std::string& msg);
+    void onParseResponseError(std::string& msg);
+
+    void resetIncompReqCnt();
+    int getIncompReqCnt();
 protected:
     HTTP_READ_CB m_readCallback;
+    int m_incompleteReqCnt;
 };
 
 

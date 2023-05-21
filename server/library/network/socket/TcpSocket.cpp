@@ -9,8 +9,10 @@
 
 #include "TcpSocket.h"
 #include "../../log/Logger.h"
-static Logger::ptr g_logger = LOG_NAME("system");
+#include "../config/Config.h"
 
+static Logger::ptr g_logger = LOG_NAME("system");
+static ConfigItem<int>::ptr g_tcp_basic_read_size = Config::SearchOrAdd("server.tcp.basic_read_size", 4096, "tcp basic bufer size");
 TcpSocket::TcpSocket(bool nonblock) 
 	:m_sock(new Sock(nonblock)), m_isNonBlock(nonblock)
 {
@@ -146,13 +148,21 @@ bool TcpSocket::send(std::shared_ptr<Buffer>& buffer, int& sendSize)
 {
 	if(!isValid())	return false;
 
+	std::vector<iovec> iovs;
+	buffer->getReadBuffers(iovs, buffer->getUnreadSize());
+	
+	msghdr msg;
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = (iovec*)&iovs[0];
+	msg.msg_iovlen = iovs.size();
+
 	sendSize = 0;
-	int retp = ::send(*m_sock, buffer->start(), buffer->pos(), 0);
+	int retp = ::sendmsg(*m_sock, &msg, 0);
 	if (retp > 0)
 	{
 		// move message from buffer
 		sendSize += retp;
-		buffer->remove(retp);
+		buffer->hasRead(retp);
 		return true;
 	}
 
@@ -185,19 +195,46 @@ bool TcpSocket::recv(std::shared_ptr<Buffer>& buffer, int& recvSize)
 	int retp = 0;
 	recvSize = 0;
 
+	// dont't know how much to read, so create a bigger extrabuf,
+	// if some data read into extrabuf, append it into buffer later
+	std::shared_ptr<char> extrabuf(new char[65536], [](char* ptr){ delete[] ptr;});
+
 	// keep receiving until all data retrieved or given buffer is fulled if socket is nonblock
 	while(true)
 	{
-		if(buffer->fulled())
-		{
-			return true;
-		}
+		
+		memset(extrabuf.get(), 0, 65536);
+
+		std::vector<iovec> iovs;
+		buffer->getWriteBuffers(iovs, buffer->getFreeSize());
+		
+		iovec extraIov;
+		extraIov.iov_base = extrabuf.get();
+		extraIov.iov_len = 65536;
+		iovs.push_back(extraIov);
+
+		msghdr msg;
+		memset(&msg, 0, sizeof(msg));
+		msg.msg_iov = (iovec*)&iovs[0];
+		msg.msg_iovlen = iovs.size();
 
 		// received
-		retp = ::recv(*m_sock, buffer->end(), buffer->freeSize(), 0);
+		retp = ::recvmsg(*m_sock, &msg, 0);
 		if(retp > 0)
 		{
-			buffer->addPos(retp);
+			int extraReadSize = retp - buffer->getFreeSize();
+			if(extraReadSize > 0)
+			{
+				buffer->hasWritten(buffer->getFreeSize());
+				
+				// add message from exter buffer into buffer
+				buffer->write(extrabuf.get(), extraReadSize);
+				buffer->hasWritten(extraReadSize);
+			}
+			else
+			{
+				buffer->hasWritten(retp);
+			}
 			recvSize += retp;
 			
 			if(m_isNonBlock) continue;
@@ -238,10 +275,10 @@ bool TcpSocket::isValid() { return m_sock != nullptr && *m_sock > SOCKET(0); }
 void TcpSocket::close()
 {
 	if (isValid())
+	{
+		LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", m_sock->fd());
 		m_sock->close();
-
-	LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", m_sock->fd());
-
+	}
 }
 
 std::string TcpSocket::getLastError()

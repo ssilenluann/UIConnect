@@ -25,7 +25,7 @@ public:
     */
     size_t execute(char* data, size_t len);
 
-    HttpRequest::ptr getData() { return m_data;}
+    HttpRequest::ptr& getData() { return m_data;}
     void setError(int v) { m_error = v;};
     uint64_t getContentLength();
 

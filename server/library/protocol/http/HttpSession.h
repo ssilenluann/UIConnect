@@ -15,6 +15,10 @@ public:
     virtual bool init() override;
 
     void handleRequest(std::shared_ptr<HttpRequest> req);
+
+protected:
+    virtual void lifeControl() override;
+    virtual void checkValid() override;
 protected:
     std::shared_ptr<HttpConnection> m_connection;
 

@@ -2,8 +2,10 @@
 #include "Http.h"
 #include "HttpRequestParser.h"
 #include "HttpResponseParser.h"
-
-HttpConnection::HttpConnection(SOCKET fd, std::shared_ptr<EventLoop> loop): TcpConnection(fd, loop)
+#include "../../network/event/EventLoop.h"
+#include "../../log/Logger.h"
+static Logger::ptr g_logger = LOG_NAME("system");
+HttpConnection::HttpConnection(SOCKET fd, std::shared_ptr<EventLoop> loop): m_incompleteReqCnt(0), TcpConnection(fd, loop)
 {
 }
 
@@ -24,33 +26,35 @@ void HttpConnection::onRead()
     // error
     if(retp == false && size == -1)
     {
-        // TODO: LOG
         onError();
         return;
     }
-
+    m_incompleteReqCnt++;
     for(;;)
     {
-        if(m_readBuffer->pos() == 0 || m_readBuffer->find(" ", 1) == std::string::npos)    break;
-        
-        std::string methodOrRes(m_readBuffer->start(), m_readBuffer->find(" ", 1));
+        std::string methodOrRes;
+        if(m_readBuffer->getUnreadSize() == 0 
+            || m_readBuffer->find(" ", methodOrRes, 20) == std::string::npos)    break;
+
         if(Http::String2HttpMethod(methodOrRes) != HttpMethod::INVALID_METHOD)
         {
             // get http request
             HttpRequestParser reqParser;
-            
-            int parsedSize = reqParser.execute(m_readBuffer->start(), m_readBuffer->pos());
-            if(reqParser.isFinished())
+            std::string msg = m_readBuffer->toString();
+            int parsedSize = reqParser.execute(const_cast<char*>(msg.c_str()), msg.size());
+            if(reqParser.isFinished() == 1)
             {
                 // get a complete request
-                m_readBuffer->remove(parsedSize);
+                m_incompleteReqCnt = 0;
+                m_readBuffer->hasRead(parsedSize);
+                reqParser.getData()->setSize(parsedSize);
                 if(m_readCallback)
                     m_readCallback(reqParser.getData());                
                 continue;
             }
             if(reqParser.hasError() > 0)
             {
-                // TODO: error
+                onParseRequestError(msg);
             }
             // not complete
             break;
@@ -61,24 +65,29 @@ void HttpConnection::onRead()
         {
             // get http response
             HttpResponseParser resParser;
-            
-            int parsedSize = resParser.execute(m_readBuffer->start(), m_readBuffer->pos());
+            std::string msg = m_readBuffer->toString();
+            int parsedSize = resParser.execute(const_cast<char*>(msg.c_str()), msg.size());
             if(resParser.isFinished() == 1)
             {
                 // get a complete response
-                m_readBuffer->remove(parsedSize);
+                m_incompleteReqCnt = 0;
+                m_readBuffer->hasRead(parsedSize);
                 // TODO:
                 continue;
             }
             if(resParser.hasError() > 0)
             {
-                // TODO: error
+                onParseResponseError(msg);
             }
             // not complete
             break;
         }
 
-        // TODO: wrong http request/response
+        // wrong http request/response
+        m_loop.lock()->addTask([&]()
+        {
+            onClose();
+        });
     }
 
     
@@ -109,4 +118,41 @@ bool HttpConnection::send(std::shared_ptr<HttpResponse> &res)
     res->dump(oss);
     m_writeBuffer->setMsg(oss.str().c_str(), oss.str().size());
     return m_channel->enableWriting();
+}
+
+void HttpConnection::onParseRequestError(std::string & msg)
+{
+    std::shared_ptr<HttpResponse> res(new HttpResponse());
+    res->setVersion(0x11);
+    res->setHeader("Server", "Luansi/UIConnect");
+    res->setStatus(HttpStatus::BAD_REQUEST);
+    res->setClose(false);
+    res->setBody("bad request: \r\n" + msg);
+    
+    send(res);
+
+    m_loop.lock()->addTask([&]()
+    {
+        onClose();
+    });
+}
+
+void HttpConnection::onParseResponseError(std::string & msg)
+{
+    LOG_DEBUG(g_logger) << "parse res error: \r\n" << msg;
+
+    m_loop.lock()->addTask([&]()
+    {
+        onClose();
+    });
+}
+
+void HttpConnection::resetIncompReqCnt()
+{
+    m_incompleteReqCnt = 0;
+}
+
+int HttpConnection::getIncompReqCnt()
+{
+    return m_incompleteReqCnt;
 }

@@ -25,7 +25,9 @@ public:
     bool removeConnection(SOCKET socket);
     bool removeConnectionInLoop(SOCKET socket);
     inline unsigned long id() {return m_sessionId;}
-    void lifeControl();
+
+    virtual void lifeControl();
+    virtual void checkValid();
     
 protected:
     
@@ -35,7 +37,7 @@ protected:
     EVENT_CALLBACK m_closeCallback;
 
     std::chrono::time_point<std::chrono::high_resolution_clock>  m_activeTime;
-    std::atomic<unsigned long long> m_msgSize;
+    std::atomic<unsigned long long> m_processedMsgSize;
     
 };
 #endif
