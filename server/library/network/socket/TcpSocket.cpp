@@ -274,7 +274,7 @@ void TcpSocket::close()
 {
 	if (isValid())
 	{
-		LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", m_sock->fd());
+		// LOG_FMT_INFO(g_logger, "tcp closed, sock_fd = %d", m_sock->fd());
 		m_sock->close();
 	}
 }

@@ -97,12 +97,18 @@ void TcpConnection::onWrite()
         return;
     }
 
-    // epoll event is in LT mode, if write buffer is empty, remove event
-    if(m_writeBuffer->getUnreadSize() == 0)
-        m_channel->disableWriting();
 
-    if(m_writeCallback)
-        m_writeCallback(size); 
+    if(m_writeBuffer->getUnreadSize() == 0)
+    {
+        m_channel->disableWriting();
+        if(m_writeCallback) m_writeCallback(size); 
+    }
+    else
+    {
+        m_channel->enableWriting();
+    }
+
+
     
 }
 
@@ -111,15 +117,13 @@ bool TcpConnection::send(Packet& pack)
 {
     m_writeBuffer->setMsg(pack);
     onWrite();
-    if(m_writeBuffer->getUnreadSize() == 0)
-        return true;
     
-    return m_channel->enableWriting();
+    return true;
 }
 
 void TcpConnection::onError()
 {
-    LOG_FMT_INFO(g_logger, "connection error and will be closed, socket fd = %d, errno = %d", m_socket->fd(), errno);
+    // LOG_FMT_INFO(g_logger, "connection error and will be closed, socket fd = %d, errno = %d", m_socket->fd(), errno);
     onClose();
     if(m_errorCallback)
         m_errorCallback(m_socket->fd());

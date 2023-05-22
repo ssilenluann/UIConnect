@@ -41,3 +41,4 @@
 /bin
 
 /abandoned
+server/lib/libyaml-cpp.so.0.7.0

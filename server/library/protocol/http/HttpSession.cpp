@@ -41,6 +41,16 @@ void HttpSession::handleRequest(std::shared_ptr<HttpRequest> req)
     std::shared_ptr<HttpResponse> res(new HttpResponse());
     HttpDispatcher::Instance().dispatch(req, res);
     m_connection->send(res);
+
+    if(req->getHeader("Connection", "") == "")
+    {
+        m_connection->setWriteCallback(
+            [&](int size)
+            {
+                m_loop.lock()->removeSession(m_sessionId);
+            }
+        );
+    }
 }
 
 // timeout and rate control

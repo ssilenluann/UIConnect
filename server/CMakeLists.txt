@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g -O0 -Wall")
 # static link boost component
 set(Boost_USE_STATIC_LIBS ON)
 # specify target link boost component
-find_package(Boost REQUIRED COMPONENTS filesystem program_options)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options regex)
 if(NOT Boost_FOUND)
 	message(FATAL_ERROR "Could not find required Boost libraries")
 endif()
