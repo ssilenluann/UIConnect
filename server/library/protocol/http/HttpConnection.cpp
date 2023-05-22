@@ -117,6 +117,11 @@ bool HttpConnection::send(std::shared_ptr<HttpResponse> &res)
     std::stringstream oss;
     res->dump(oss);
     m_writeBuffer->setMsg(oss.str().c_str(), oss.str().size());
+
+    onWrite();
+    if(m_writeBuffer->getUnreadSize() == 0)
+        return true;
+
     return m_channel->enableWriting();
 }
 

@@ -110,6 +110,10 @@ void TcpConnection::onWrite()
 bool TcpConnection::send(Packet& pack)
 {
     m_writeBuffer->setMsg(pack);
+    onWrite();
+    if(m_writeBuffer->getUnreadSize() == 0)
+        return true;
+    
     return m_channel->enableWriting();
 }
 

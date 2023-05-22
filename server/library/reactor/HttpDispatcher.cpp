@@ -25,7 +25,7 @@ void HttpDispatcher::dispatch(std::shared_ptr<HttpRequest> req, std::shared_ptr<
     {
         if(boost::regex_match(query, fp.second.first) )
         {
-            LOG_DEBUG(g_logger) << "path: "<< query << ", match pattern: " << fp.second.first;
+            // LOG_DEBUG(g_logger) << "path: "<< query << ", match pattern: " << fp.second.first;
             fp.second.second->handleHttpRequest(req, res);
             return;
         }

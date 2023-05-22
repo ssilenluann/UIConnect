@@ -24,9 +24,9 @@ public:
     inline SOCKET fd() { return m_socket->fd();}
 
     virtual void onRead();
-    void onWrite();
-    void onError();
-    void onClose();
+    virtual void onWrite();
+    virtual void onError();
+    virtual void onClose();
 
     bool send(Packet& pack);
 
