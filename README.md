@@ -21,6 +21,7 @@
 #### 使用说明
     适用于Linux操作系统，编译此项目需要g++编译器，CMake项目构建工具及BOOST库，
     项目所引入的第三方库文件在server/external中，链接文件在./lib中。
+    若yampl-cpp动态链接失败，可自行下载yaml-cpp项目进行编译，并将动态库拷贝至server/lib中
 
 #### 示例说明
     在sever/examples路径中有http_server的示例代码，
