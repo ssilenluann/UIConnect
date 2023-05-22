@@ -1,5 +1,3 @@
-#ifndef NETWORK_SOCKET_TCP_SOCKET_CPP
-#define NETWORK_SOCKET_TCP_SOCKET_CPP
 
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -289,4 +287,3 @@ std::string TcpSocket::getLastError()
 	return getsockopt(*m_sock, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0
 		? strerror(errno) : strerror(optval);
 }
-#endif

@@ -1,5 +1,3 @@
-#ifndef NETWORK_EVENT_EVENTTHREAD_CPP
-#define NETWORK_EVENT_EVENTTHREAD_CPP
 
 #include "EventThread.h"
 
@@ -43,4 +41,3 @@ std::shared_ptr<EventLoop> EventThread::getLoop()
 {
 	return m_loop;	
 }
-#endif

@@ -29,7 +29,7 @@ bool HttpSession::init()
     );
     m_connection->setCloseCallback(std::bind(&TcpSession::removeConnectionInLoop, this, std::placeholders::_1));
 
-    lifeControl();
+    // lifeControl(); // close for ab test
     return true;
 }
 

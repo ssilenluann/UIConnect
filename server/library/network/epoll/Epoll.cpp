@@ -1,6 +1,3 @@
-#ifndef NETWORK_EPOLL_EPOLL_CPP
-#define NETWORK_EPOLL_EPOLL_CPP
-
 #include "Epoll.h"
 #include "../../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
@@ -79,8 +76,8 @@ bool Epoll::ctrl(std::shared_ptr<TcpChannel>& pChannel, int op, uint32_t eventTy
         m_epfd, event.data.fd, errno);
     }
 
-    LOG_DEBUG(g_logger) << "epoll ctrl: epoll instance fd: " << m_epfd << ", operation: " << op 
-        << ", target fd: " << pChannel->fd() << ", events: " << event.events;
+    // LOG_DEBUG(g_logger) << "epoll ctrl: epoll instance fd: " << m_epfd << ", operation: " << op 
+    //     << ", target fd: " << pChannel->fd() << ", events: " << event.events;
     return retp >= 0;
 }
 
@@ -146,5 +143,3 @@ void Epoll::close()
     m_events.clear();
     m_channels.clear();
 }
-
-#endif

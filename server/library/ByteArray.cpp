@@ -1,5 +1,3 @@
-#ifndef BYTEARRAY_CPP
-#define BYTEARRAY_CPP
 
 #include <fstream>
 #include <sstream>
@@ -692,7 +690,3 @@ void ByteArray::hasWritten(size_t size)
             m_writeBlock = m_writeBlock->next;
     }
 }
-
-
-
-#endif

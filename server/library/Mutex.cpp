@@ -1,6 +1,3 @@
-#ifndef MUTEX_CPP
-#define MUTEX_CPP
-
 #include "Mutex.h"
 
 uint64_t RWMutex::s_counter = 0;
@@ -33,5 +30,3 @@ void Semaphore::notify()
         throw std::logic_error("sem_post error");
     }
 }
-
-#endif

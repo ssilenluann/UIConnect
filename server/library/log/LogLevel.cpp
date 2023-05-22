@@ -1,5 +1,3 @@
-#ifndef LOG_LOGLEVEL_CPP
-#define LOG_LOGLEVEL_CPP
 
 #include "LogLevel.h"
 const char* LogLevel::ToString(LogLevel::Level level) 
@@ -43,5 +41,3 @@ LogLevel::Level LogLevel::FromString(const std::string& str)
     return LogLevel::UNKNOWN;
 #undef XX
 }
-
-#endif

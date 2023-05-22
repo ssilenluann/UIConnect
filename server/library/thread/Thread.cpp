@@ -1,5 +1,3 @@
-#ifndef THREAD_THREAD_CPP
-#define THREAD_THREAD_CPP
 
 #include "Thread.h"
 #include "../log/Logger.h"
@@ -93,5 +91,3 @@ void Thread::quit()
     m_cv.wait(lock, [this](){return m_isEnd == true;});     // wait thread entry func ended
     LOG_INFO(g_logger) << "thread quited";
 }
-
-#endif

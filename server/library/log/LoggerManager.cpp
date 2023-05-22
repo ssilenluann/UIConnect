@@ -1,5 +1,3 @@
-#ifndef LOG_LOGGERMANAGER_CPP
-#define LOG_LOGGERMANAGER_CPP
 
 #include <memory>
 
@@ -49,5 +47,3 @@ std::string LoggerManager::toYamlString()
 void LoggerManager::init() 
 {
 }
-
-#endif

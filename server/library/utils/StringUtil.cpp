@@ -1,5 +1,3 @@
-#ifndef UTILS_STRINGUTIL_CPP
-#define UTILS_STRINGUTIL_CPP
 #include "StringUtil.h"
 #include <algorithm>
 #include <cctype>
@@ -11,6 +9,5 @@ void StringUtil::ToLower(std::string & str)
     });    
 }
 
-#endif
 
 

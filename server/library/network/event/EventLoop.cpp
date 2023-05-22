@@ -1,5 +1,4 @@
-#ifndef NETWORK_EVENT_EVENTLOOP_CPP
-#define NETWORK_EVENT_EVENTLOOP_CPP
+
 #include "EventLoop.h"
 #include "../TcpSession.h"
 #include "../../log/Logger.h"
@@ -161,4 +160,3 @@ TimerFunc::ptr EventLoop::addTimer(uint64_t cycle, std::function<void()> cb, boo
     return m_timer->addTimer(cycle, cb, oneshot);
 }
 
-#endif

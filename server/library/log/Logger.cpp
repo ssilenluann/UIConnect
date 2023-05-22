@@ -1,6 +1,3 @@
-#ifndef LOG_LOGGER_CPP
-#define LOG_LOGGER_CPP
-
 #include <iostream>
 
 #include "Logger.h"   
@@ -143,5 +140,3 @@ void Logger::fatal(LogItem::ptr item)
 {
     log(LogLevel::FATAL, item);
 }
-
-#endif

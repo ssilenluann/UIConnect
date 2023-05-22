@@ -1,5 +1,3 @@
-#ifndef NETWORK_EVENT_EVENTTHREADLOOP_CPP
-#define NETWORK_EVENT_EVENTTHREADLOOP_CPP
 
 #include "EventThreadPool.h"
 #include "../../log/Logger.h"
@@ -16,4 +14,3 @@ std::shared_ptr<EventLoop> EventThreadPool::getNextLoop()
 	no ++;
 	return loop;
 }
-#endif

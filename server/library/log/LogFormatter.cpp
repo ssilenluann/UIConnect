@@ -1,6 +1,3 @@
-#ifndef LOG_LOGFORMATTER_CPP
-#define LOG_LOGFORMATTER_CPP
-
 #include <iostream>
 #include <map>
 #include <functional>
@@ -320,4 +317,3 @@ void LogFormatter::init()
 
 }
 
-#endif

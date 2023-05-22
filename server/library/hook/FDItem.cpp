@@ -1,6 +1,3 @@
-#ifndef HOOK_FDITEM_CPP
-#define HOOK_FDITEM_CPP
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -67,5 +64,3 @@ bool FDItem::init()
     m_isClosed = false;
     return m_isInited;
 }
-
-#endif

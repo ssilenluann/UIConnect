@@ -1,5 +1,4 @@
-#ifndef UTILS_THREADUTIL_CPP
-#define UTILS_THREADUTIL_CPP
+
 #include <execinfo.h>
 
 #include "../log/Logger.h"
@@ -81,5 +80,3 @@ uint32_t ThreadUtil::GetCoroutineId()
 {
     return 0;
 }
-
-#endif

@@ -1,5 +1,3 @@
-#ifndef CONFIG_CONFIG_CPP
-#define CONFIG_CONFIG_CPP
 
 #include <iostream>
 
@@ -109,4 +107,3 @@ bool Config::IsNodeNameValid(const std::string& name)
 {
     return name.find_first_not_of("abcdefghijklmnopqrstuvwxyz._0123456789") == std::string::npos;
 }
-#endif

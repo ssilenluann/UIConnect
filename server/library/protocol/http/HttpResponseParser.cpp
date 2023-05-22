@@ -1,5 +1,3 @@
-#ifndef PROTOCOL_HTTP_HTTPRESPONSEPARSER_CPP
-#define PROTOCOL_HTTP_HTTPRESPONSEPARSER_CPP
 
 #include "HttpResponseParser.h"
 #include "../../log/Logger.h"
@@ -102,4 +100,3 @@ uint64_t HttpResponseParser::getContentLength()
 {
     return m_data->getHeaderAs<uint64_t>("content-length", 0);
 }
-#endif

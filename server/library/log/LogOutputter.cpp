@@ -1,6 +1,3 @@
-#ifndef LOG_LOGOUTPUTTER_CPP
-#define LOG_LOGOUTPUTTER_CPP
-
 #include "LogOutputter.h"
 
 LogOutputter::LogOutputter(std::string pattern)
@@ -23,6 +20,3 @@ LogFormatter::ptr LogOutputter::getFormatter()
     Logger::MutexType::Lock lock(m_mutex);
     return m_formatter;
 }
-
-
-#endif

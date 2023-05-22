@@ -1,6 +1,3 @@
-#ifndef NETWORK_TCPCONNECTION_CPP
-#define NETWORK_TCPCONNECTION_CPP
-
 #include "TcpConnection.h"
 #include "../log/Logger.h"
 static Logger::ptr g_logger = LOG_NAME("system");
@@ -168,4 +165,3 @@ TcpConnection::ConnState TcpConnection::status()
 {
     return m_state;
 }
-#endif

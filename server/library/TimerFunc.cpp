@@ -1,5 +1,3 @@
-#ifndef TIMERFUNC_CPP
-#define TIMERFUNC_CPP
 
 #include <memory>
 #include <vector>
@@ -177,6 +175,3 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs)
     }
 
 }
-
-#endif
-

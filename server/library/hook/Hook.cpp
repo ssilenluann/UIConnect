@@ -1,6 +1,3 @@
-#ifndef HOOK_HOOK_CPP
-#define HOOK_HOOK_CPP
-
 #include "Hook.h"
 #include "log/Logger.h"
 #include "config/Config.h"
@@ -481,4 +478,3 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
 }
 
 };
-#endif

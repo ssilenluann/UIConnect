@@ -1,5 +1,3 @@
-#ifndef NETWORK_TCPSERVER_CPP
-#define NETWORK_TCPSERVER_CPP
 
 #include <iostream>
 #include "TcpServer.h"
@@ -113,4 +111,3 @@ void TcpServer::setQuitCallback(CALLBACK func)
 {
 	m_quitCallback = func;
 }
-#endif

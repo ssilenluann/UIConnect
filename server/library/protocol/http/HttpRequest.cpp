@@ -1,5 +1,3 @@
-#ifndef PROTOCOL_HTTP_HTTPREQUEST_CPP
-#define PROTOCOL_HTTP_HTTPREQUEST_CPP
 
 #include "HttpRequest.h"
 #include "Http.h"
@@ -126,4 +124,3 @@ std::ostream &HttpRequest::dump(std::ostream &ost)
 
     return ost;
 }
-#endif

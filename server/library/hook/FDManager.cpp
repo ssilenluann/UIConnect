@@ -1,6 +1,3 @@
-#ifndef HOOK_FDMANAGER_CPP
-#define HOOK_FDMANAGER_CPP
-
 #include "FDManager.h"
 
 FDManager::FDManager()
@@ -36,5 +33,3 @@ void FDManager::del(int fd)
 
     m_fds[fd].reset();
 }
-
-#endif

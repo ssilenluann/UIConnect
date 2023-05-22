@@ -1,6 +1,3 @@
-#ifndef PROTOCOL_HTTP_HTTPRESPONSE_CPP
-#define PROTOCOL_HTTP_HTTPRESPONSE_CPP
-
 #include "HttpResponse.h"
 #include <string.h>
 
@@ -57,5 +54,3 @@ std::ostream &HttpResponse::dump(std::ostream &ost)
     
     return ost;
 }
-
-#endif

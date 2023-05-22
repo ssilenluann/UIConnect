@@ -1,5 +1,4 @@
-#ifndef NETWORK_SOCKET_BUFFER_CPP
-#define NETWORK_SOCKET_BUFFER_CPP
+
 #include "Buffer.h"
 #include "../../log/Logger.h"
 
@@ -95,5 +94,4 @@ int Buffer::find(const std::string & str, std::string& prefix, int readLength)
 	return pos;
 }
 
-#endif
 

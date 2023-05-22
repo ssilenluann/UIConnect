@@ -1,5 +1,3 @@
-#ifndef LOG_LOGITEM_CPP
-#define LOG_LOGITEM_CPP
 
 #include <stdarg.h>
 
@@ -47,5 +45,3 @@ void LogItem::format(const char* fmt, va_list al)
         free(buf);
     }
 }
-
-#endif

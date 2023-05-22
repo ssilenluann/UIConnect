@@ -1,6 +1,3 @@
-#ifndef PROGRAMOPT_CPP
-#define PROGRAMOPT_CPP
-
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -94,4 +91,3 @@ std::string ProgramOpt::getConfigPath()
     return getAbsolutePath(get<std::string>("c", "conf"));
 }
 
-#endif

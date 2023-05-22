@@ -1,5 +1,3 @@
-#ifndef LOG_LOGFILEOUTPUTTER_CPP
-#define LOG_LOGFILEOUTPUTTER_CPP
 #include <iostream>
 
 #include "LogFileOutputter.h"
@@ -69,4 +67,3 @@ bool LogFileOutputter::reopen(const std::string fileName)
     reopen();
 }
 
-#endif

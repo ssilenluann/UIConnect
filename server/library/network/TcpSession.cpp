@@ -1,6 +1,3 @@
-#ifndef NETWORK_TCPSESSION_CPP
-#define NETWORK_TCPSESSION_CPP
-
 #include "TcpSession.h"
 #include "./event/EventLoop.h"
 #include "../log/Logger.h"
@@ -36,7 +33,7 @@ bool TcpSession::init()
     m_connection->setReadCallback(std::bind(&TcpSession::handleMessage, this, std::placeholders::_1));
     m_connection->setCloseCallback(std::bind(&TcpSession::removeConnectionInLoop, this, std::placeholders::_1));
 
-    lifeControl();
+    // lifeControl(); // close for ab test
     return true;
 }
 
@@ -98,4 +95,3 @@ void TcpSession::checkValid()
     m_processedMsgSize = 0;
     m_loop.lock()->addTimer(timeout, std::bind(&TcpSession::checkValid, this));
 }
-#endif

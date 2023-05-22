@@ -1,5 +1,3 @@
-#ifndef NETWORK_PACKET_CPP
-#define NETWORK_PACKET_CPP
 
 #include "Packet.h"
 #include "../../log/Logger.h"
@@ -59,5 +57,3 @@ Packet& Packet::operator=(const Packet& rhs)
 	return *this;
 
 }
-
-#endif

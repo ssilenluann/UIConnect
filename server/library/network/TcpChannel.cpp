@@ -1,5 +1,3 @@
-#ifndef NETWORK_TCPCHANNEL_CPP
-#define NETWORK_TCPCHANNEL_CPP
 
 #include <sys/epoll.h>
 
@@ -164,4 +162,3 @@ bool TcpChannel::handleEvent()
 
     return true;
 }
-#endif

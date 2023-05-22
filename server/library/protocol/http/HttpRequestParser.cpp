@@ -1,6 +1,3 @@
-#ifndef PROTOCOL_HTTP_HTTPREQUESTPARSER_CPP
-#define PROTOCOL_HTTP_HTTPREQUESTPARSER_CPP
-
 #include "HttpRequestParser.h"
 #include "Http.h"
 
@@ -166,5 +163,3 @@ uint64_t HttpRequestParser::GetHttpRequestMaxBodySize()
     return s_http_request_max_body_size;
 }
 
-
-#endif

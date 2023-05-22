@@ -1,6 +1,3 @@
-#ifndef LOG_LOGSTDOUTOUTPUTTER_CPP
-#define LOG_LOGSTDOUTOUTPUTTER_CPP
-
 #include "LogStdoutOutputter.h"
 
 #include <iostream>
@@ -34,4 +31,3 @@ std::string LogStdoutOutputter::toYamlString()
     // return ss.str();
     return "";
 }
-#endif

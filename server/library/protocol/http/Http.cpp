@@ -1,5 +1,4 @@
-#ifndef PROTOCOL_HTTP_HTTP_CPP
-#define PROTOCOL_HTTP_HTTP_CPP
+
 #include "Http.h"
 #include <string.h>
 HttpMethod Http::String2HttpMethod(const std::string & str)
@@ -50,4 +49,3 @@ const char *Http::HttpStatus2String(HttpStatus &status)
     }
 
 }
-#endif
